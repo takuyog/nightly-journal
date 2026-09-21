@@ -2,8 +2,19 @@
 <html lang="ja" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nightly Journal - 今日の振り返りと明日の行動</title>
+    
+    <!-- PWA Settings -->
+    <meta name="theme-color" content="#0B0F19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NightlyJournal">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230B0F19'/><text x='50%' y='65%' font-size='60' text-anchor='middle' fill='%233B82F6'>🌙</text></svg>">
+    
+    <!-- PWA Manifest Inline -->
+    <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22Nightly%20Journal%22%2C%22short_name%22%3A%22Journal%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230B0F19%22%2C%22theme_color%22%3A%22%230B0F19%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520100%2520100%2527%253E%253Crect%2520width%253D%2527100%2527%2520height%253D%2527100%2527%2520rx%253D%252720%2527%2520fill%253D%2527%25230B0F19%2527%252F%253E%253Ctext%2520x%253D%252750%2525%2527%2520y%253D%252765%2525%2527%2520font-size%253D%252760%2527%2520text-anchor%253D%2527middle%2527%2520fill%253D%2527%25233B82F6%2527%253E%25F0%259F%258C%2599%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -31,7 +42,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
-            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, width 0.2s ease, flex-grow 0.2s ease;
         }
         ::-webkit-scrollbar {
             width: 5px;
@@ -50,7 +61,89 @@
         .slide-up-fast {
             transition: transform 0.15s cubic-bezier(0, 0, 0.2, 1);
         }
+        .writing-mode-vertical {
+            writing-mode: vertical-rl;
+        }
     </style>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Firebase デモ用初期化設定（実際の運用時はFirebaseコンソールの設定値と置き換え可能）
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoConfigKeyForNightlyJournalApp01",
+            authDomain: "nightly-journal-demo.firebaseapp.com",
+            projectId: "nightly-journal-demo",
+            storageBucket: "nightly-journal-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:demo123456789"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        window.firebaseLogin = async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                showToast(`ログインしました: ${result.user.displayName}`);
+            } catch (error) {
+                console.warn("Firebase Auth Note:", error.message);
+                showToast("ゲストモードで利用中（デモ認証キー動作）");
+            }
+        };
+
+        window.firebaseLogout = async () => {
+            try {
+                await signOut(auth);
+                showToast("ログアウトしました");
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        window.syncCloudData = async (userId) => {
+            if (!userId) return;
+            try {
+                const docRef = doc(db, "journals", userId);
+                await setDoc(docRef, { data: window.appData, updatedAt: new Date().toISOString() }, { merge: true });
+            } catch (e) {
+                console.log("Cloud sync saved locally fallback");
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            const loginBtn = document.getElementById('login-btn');
+            const userProfile = document.getElementById('user-profile');
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+
+            if (user) {
+                window.currentUser = user;
+                loginBtn.classList.add('hidden');
+                userProfile.classList.remove('hidden');
+                userAvatar.src = user.photoURL || 'https://via.placeholder.com/32';
+                userName.textContent = user.displayName || 'ユーザー';
+                
+                // クラウドデータ読込試行
+                try {
+                    const docSnap = await getDoc(doc(db, "journals", user.uid));
+                    if (docSnap.exists()) {
+                        window.appData = docSnap.data().data || window.appData;
+                        window.renderAll();
+                    }
+                } catch(e) {}
+            } else {
+                window.currentUser = null;
+                loginBtn.classList.remove('hidden');
+                userProfile.classList.add('hidden');
+            }
+        });
+    </script>
 </head>
 <body class="bg-[#0B0F19] text-slate-200 min-h-screen lg:h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden">
 
@@ -76,11 +169,26 @@
                     </button>
                 </div>
 
-                <!-- スマホ用 保存ボタン -->
-                <div class="flex md:hidden items-center gap-1.5">
-                    <button onclick="saveData(); showToast('保存しました！');" class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-xs font-medium">
-                        保存
+                <!-- ログイン & PWA インストールボタン -->
+                <div class="flex items-center gap-1.5">
+                    <button id="login-btn" onclick="firebaseLogin()" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded-xl text-xs font-semibold transition">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5 text-blue-400"></i>
+                        <span>ログイン</span>
                     </button>
+                    
+                    <div id="user-profile" class="hidden flex items-center gap-1.5 bg-slate-800/80 px-2 py-0.5 rounded-xl border border-slate-700">
+                        <img id="user-avatar" class="w-5 h-5 rounded-full" src="" alt="user">
+                        <span id="user-name" class="text-xs text-slate-200 font-medium max-w-[80px] truncate"></span>
+                        <button onclick="firebaseLogout()" class="text-slate-400 hover:text-rose-400 p-0.5" title="ログアウト">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex md:hidden items-center gap-1.5">
+                        <button onclick="saveData(); showToast('保存しました！');" class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-xs font-medium">
+                            保存
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -138,16 +246,19 @@
     </header>
 
     <!-- メインエリア -->
-    <div class="flex-1 max-w-[1800px] w-full mx-auto p-3 sm:p-4 md:p-6 lg:grid lg:grid-cols-12 gap-5 lg:overflow-hidden lg:h-[calc(100vh-75px)]">
+    <div class="flex-1 max-w-[1800px] w-full mx-auto p-3 sm:p-4 md:p-6 flex flex-col lg:flex-row gap-4 lg:overflow-hidden lg:h-[calc(100vh-75px)]">
 
         <!-- 1. 左カラム：タスク管理エリア -->
-        <aside id="tab-tasks" class="mobile-tab-content hidden lg:flex lg:col-span-3 flex-col h-full overflow-hidden">
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
+        <aside id="tab-tasks" class="mobile-tab-content col-container hidden lg:flex flex-col h-full overflow-hidden transition-all duration-300 w-full lg:w-[28%] shrink-0">
+            <div id="col-content-left" class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
                     <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
                         <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
                         常時タスク一覧
                     </h2>
+                    <button onclick="toggleColumn('left')" class="hidden lg:flex items-center gap-1 p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 text-xs transition" title="カラムを閉じる">
+                        <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
                 <div class="mb-3 space-y-2 shrink-0">
@@ -170,7 +281,6 @@
                     </div>
                 </div>
 
-                <!-- 凡例 -->
                 <div class="flex items-center gap-2 text-[10px] text-slate-400 pb-2 border-b border-slate-800/60 mb-2 shrink-0 flex-wrap">
                     <span class="flex items-center gap-1 font-bold text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-500/40"></span>本日必達(8h以内)</span>
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span>本日実行</span>
@@ -180,122 +290,140 @@
 
                 <div class="flex-1 overflow-y-auto space-y-2.5 pr-1" id="tasks-list"></div>
             </div>
+
+            <div id="col-collapsed-left" onclick="toggleColumn('left')" class="hidden cursor-pointer bg-[#151C2C] border border-slate-800 hover:border-blue-500/60 rounded-2xl h-full w-12 flex flex-col items-center justify-between py-4 shadow-xl text-slate-400 hover:text-blue-400 transition">
+                <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
+                <span class="writing-mode-vertical text-xs font-bold tracking-widest text-slate-300">タスク管理</span>
+                <i data-lucide="panel-left-open" class="w-4 h-4"></i>
+            </div>
         </aside>
 
         <!-- 2. 中央カラム：振り返りノート -->
-        <main id="tab-journal" class="mobile-tab-content flex flex-col lg:col-span-5 space-y-5 lg:overflow-y-auto lg:h-full pr-0 lg:pr-2 pb-12">
-            <div class="border-b border-slate-800 pb-2 flex items-center justify-between sticky top-0 bg-[#0B0F19]/90 backdrop-blur-md pt-1 z-10">
-                <h2 class="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
-                    <i data-lucide="book-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
-                    今日の振り返りノート
-                </h2>
-                <button id="share-btn" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 px-2.5 py-1.5 rounded-xl text-xs font-medium transition">
-                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
-                    <span>共有</span>
-                </button>
-            </div>
-
-            <!-- 感想 -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
-                <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
-                    <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
-                    今日の感想
-                </label>
-                <textarea id="reflection-journal" rows="4" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                    placeholder="今日あったこと、感じたことを書いてみよう"></textarea>
-            </div>
-
-            <!-- 気づいたこと -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
-                <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
-                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
-                    気づいたこと 💡
-                </label>
-                <textarea id="reflection-insights" rows="4" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                    placeholder="今日気づいたこと・学んだことは？"></textarea>
-            </div>
-
-            <!-- 課題と解決策 -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-                <label class="block text-sm sm:text-base font-semibold text-slate-200 flex items-center gap-2">
-                    <i data-lucide="wrench" class="w-4 h-4 text-purple-400"></i>
-                    課題と解決策 🎯
-                </label>
-
-                <div class="bg-[#1A2336] p-3 sm:p-4 rounded-xl border border-slate-700/60 space-y-2.5">
-                    <div class="space-y-1">
-                        <span class="text-[11px] text-purple-300 font-medium">現在の課題</span>
-                        <input type="text" id="issue-input" 
-                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-purple-500"
-                            placeholder="例：集中力が途切れやすい">
-                    </div>
-                    <div class="space-y-1">
-                        <span class="text-[11px] text-emerald-300 font-medium">解決策</span>
-                        <input type="text" id="solution-input" 
-                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
-                            placeholder="例：25分作業して5分休むポモドーロテクニックを使う">
-                    </div>
-                    <button id="add-issue-pair-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                        <span>課題と解決策を追加</span>
-                    </button>
-                </div>
-
-                <div id="issue-pairs-list" class="space-y-2.5"></div>
-            </div>
-
-            <!-- よかったこと -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
-                <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
-                    <i data-lucide="smile" class="w-4 h-4 text-emerald-400"></i>
-                    よかったこと 😊
-                </label>
-                <textarea id="reflection-good" rows="4" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    placeholder="うまくいったこと、嬉しかったことは？"></textarea>
-            </div>
-
-            <!-- AIに相談する -->
-            <div class="bg-gradient-to-br from-[#182238] to-[#121827] border border-blue-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <main id="tab-journal" class="mobile-tab-content col-container flex flex-col flex-1 h-full overflow-hidden transition-all duration-300 min-w-[320px]">
+            <div id="col-content-center" class="flex flex-col h-full overflow-y-auto pr-0 lg:pr-2 pb-12 space-y-5">
+                <div class="border-b border-slate-800 pb-2 flex items-center justify-between sticky top-0 bg-[#0B0F19]/90 backdrop-blur-md pt-1 z-10">
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
+                        今日の振り返りノート
+                    </h2>
                     <div class="flex items-center gap-2">
-                        <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
-                            <i data-lucide="bot" class="w-5 h-5 text-blue-400"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-sm sm:text-base font-bold text-slate-100">AIアドバイザーに相談</h3>
-                            <p class="text-[11px] text-slate-400">客観的な分析、課題の改善案、実践的フィードバックをお届けします</p>
-                        </div>
+                        <button id="share-btn" class="flex items-center gap-1.5 bg-emerald-700/80 hover:bg-emerald-600 text-white border border-emerald-500/50 px-3 py-1.5 rounded-xl text-xs font-bold shadow-md transition active:scale-95" title="LINEに送信">
+                            <i data-lucide="share-2" class="w-4 h-4"></i>
+                            <span>LINEへ送る</span>
+                        </button>
+                        <button onclick="toggleColumn('center')" class="hidden lg:flex items-center gap-1 p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 text-xs transition" title="カラムを閉じる">
+                            <i data-lucide="panel-bottom-close" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    <button id="ask-ai-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl transition text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-900/40 shrink-0 active:scale-95">
-                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
-                        <span>AIに相談する ✨</span>
-                    </button>
                 </div>
 
-                <div id="ai-response-container" class="hidden space-y-2 pt-1">
-                    <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text"></div>
+                <!-- 感想 -->
+                <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                    <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                        <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
+                        今日の感想
+                    </label>
+                    <textarea id="reflection-journal" rows="4" 
+                        class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                        placeholder="今日あったこと、感じたことを書いてみよう"></textarea>
                 </div>
+
+                <!-- 気づいたこと -->
+                <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                    <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                        <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
+                        気づいたこと 💡
+                    </label>
+                    <textarea id="reflection-insights" rows="4" 
+                        class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                        placeholder="今日気づいたこと・学んだことは？"></textarea>
+                </div>
+
+                <!-- 課題と解決策 -->
+                <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+                    <label class="block text-sm sm:text-base font-semibold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="wrench" class="w-4 h-4 text-purple-400"></i>
+                        課題と解決策 🎯
+                    </label>
+
+                    <div class="bg-[#1A2336] p-3 sm:p-4 rounded-xl border border-slate-700/60 space-y-2.5">
+                        <div class="space-y-1">
+                            <span class="text-[11px] text-purple-300 font-medium">現在の課題</span>
+                            <input type="text" id="issue-input" 
+                                class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-purple-500"
+                                placeholder="例：集中力が途切れやすい">
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[11px] text-emerald-300 font-medium">解決策</span>
+                            <input type="text" id="solution-input" 
+                                class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                                placeholder="例：25分作業して5分休むポモドーロテクニックを使う">
+                        </div>
+                        <button id="add-issue-pair-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>課題と解決策を追加</span>
+                        </button>
+                    </div>
+
+                    <div id="issue-pairs-list" class="space-y-2.5"></div>
+                </div>
+
+                <!-- よかったこと -->
+                <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                    <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                        <i data-lucide="smile" class="w-4 h-4 text-emerald-400"></i>
+                        よかったこと 😊
+                    </label>
+                    <textarea id="reflection-good" rows="4" 
+                        class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        placeholder="うまくいったこと、嬉しかったことは？"></textarea>
+                </div>
+
+                <!-- AIに相談する -->
+                <div class="bg-gradient-to-br from-[#182238] to-[#121827] border border-blue-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+                                <i data-lucide="bot" class="w-5 h-5 text-blue-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold text-slate-100">AIアドバイザーに相談</h3>
+                                <p class="text-[11px] text-slate-400">客観的な分析、課題の改善案、実践的フィードバックをお届けします</p>
+                            </div>
+                        </div>
+                        <button id="ask-ai-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl transition text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-900/40 shrink-0 active:scale-95">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                            <span>AIに相談する ✨</span>
+                        </button>
+                    </div>
+
+                    <div id="ai-response-container" class="hidden space-y-2 pt-1">
+                        <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="col-collapsed-center" onclick="toggleColumn('center')" class="hidden cursor-pointer bg-[#151C2C] border border-slate-800 hover:border-blue-500/60 rounded-2xl h-full w-12 flex flex-col items-center justify-between py-4 shadow-xl text-slate-400 hover:text-blue-400 transition">
+                <i data-lucide="book-open" class="w-5 h-5 text-blue-400"></i>
+                <span class="writing-mode-vertical text-xs font-bold tracking-widest text-slate-300">振り返りノート</span>
+                <i data-lucide="panel-bottom-open" class="w-4 h-4"></i>
             </div>
         </main>
 
         <!-- 3. 右カラム：「学び・気づき」「課題・解決策」「カレンダー」の3タブエリア -->
-        <aside class="lg:col-span-4 flex flex-col h-full overflow-hidden relative">
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden relative">
-                
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
+        <aside id="tab-right" class="mobile-tab-content col-container hidden lg:flex flex-col h-full overflow-hidden transition-all duration-300 w-full lg:w-[35%] shrink-0">
+            <div id="col-content-right" class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0 gap-2">
                     <div class="hidden lg:flex items-center bg-[#1A2336] p-1 rounded-xl border border-slate-700/60 w-full gap-1">
-                        <button onclick="switchRightTab('insights')" id="pc-right-tab-insights" class="flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-blue-600 text-white shadow">
+                        <button onclick="switchRightTab('insights')" id="pc-right-tab-insights" class="flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-blue-600 text-white shadow">
                             <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-                            <span>学び・気づき</span>
+                            <span>学び</span>
                         </button>
-                        <button onclick="switchRightTab('issues')" id="pc-right-tab-issues" class="flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200">
+                        <button onclick="switchRightTab('issues')" id="pc-right-tab-issues" class="flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200">
                             <i data-lucide="wrench" class="w-3.5 h-3.5 text-purple-400"></i>
-                            <span>課題と解決策</span>
+                            <span>課題・解決</span>
                         </button>
-                        <button onclick="switchRightTab('calendar')" id="pc-right-tab-calendar" class="flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200">
+                        <button onclick="switchRightTab('calendar')" id="pc-right-tab-calendar" class="flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200">
                             <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-indigo-400"></i>
                             <span>カレンダー</span>
                         </button>
@@ -304,6 +432,10 @@
                     <h2 class="lg:hidden text-base font-bold text-slate-100 flex items-center gap-2">
                         <span id="mobile-right-tab-title">学び・気づき</span>
                     </h2>
+
+                    <button onclick="toggleColumn('right')" class="hidden lg:flex items-center gap-1 p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 text-xs transition shrink-0" title="カラムを閉じる">
+                        <i data-lucide="panel-right-close" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
                 <!-- 学び・気づき タブ -->
@@ -378,6 +510,12 @@
                 </div>
 
             </div>
+
+            <div id="col-collapsed-right" onclick="toggleColumn('right')" class="hidden cursor-pointer bg-[#151C2C] border border-slate-800 hover:border-blue-500/60 rounded-2xl h-full w-12 flex flex-col items-center justify-between py-4 shadow-xl text-slate-400 hover:text-blue-400 transition">
+                <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
+                <span class="writing-mode-vertical text-xs font-bold tracking-widest text-slate-300">学び・カレンダー</span>
+                <i data-lucide="panel-right-open" class="w-4 h-4"></i>
+            </div>
         </aside>
 
     </div>
@@ -392,9 +530,11 @@
     <script>
         const STORAGE_KEY = 'nightly_journal_data_v2';
         let currentDateStr = getTodayString();
-        let appData = loadData();
+        window.appData = loadData();
         let calCurrentYearMonth = new Date();
         let modalSelectedDate = '';
+
+        const colStates = { left: true, center: true, right: true };
 
         // DOM Elements
         const datePicker = document.getElementById('date-picker');
@@ -445,7 +585,21 @@
             datePicker.value = currentDateStr;
             renderAll();
             setupEventListeners();
+            registerServiceWorker();
         });
+
+        // Service Worker for PWA
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('activate', e => self.clients.claim());
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `;
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            }
+        }
 
         function getTodayString() {
             const now = new Date();
@@ -458,13 +612,45 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // ★ 8時間以内判定関数（対象日付が今日、かつ現時刻が16:00以降の場合にtrue）
         function isUrgentTask(dateStr) {
             const todayStr = getTodayString();
             if (dateStr !== todayStr) return false;
             const currentHour = new Date().getHours();
-            return currentHour >= 16; // 16:00〜23:59 (締切23:59の8時間前以降)
+            return currentHour >= 16;
         }
+
+        window.toggleColumn = function(colName) {
+            colStates[colName] = !colStates[colName];
+            
+            const targetContainer = document.getElementById(colName === 'left' ? 'tab-tasks' : (colName === 'center' ? 'tab-journal' : 'tab-right'));
+            const contentEl = document.getElementById(`col-content-${colName}`);
+            const collapsedEl = document.getElementById(`col-collapsed-${colName}`);
+
+            if (colStates[colName]) {
+                contentEl.classList.remove('hidden');
+                collapsedEl.classList.add('hidden');
+                if (colName === 'left') {
+                    targetContainer.style.width = '';
+                    targetContainer.classList.add('lg:w-[28%]');
+                } else if (colName === 'right') {
+                    targetContainer.style.width = '';
+                    targetContainer.classList.add('lg:w-[35%]');
+                } else {
+                    targetContainer.classList.add('flex-1');
+                }
+            } else {
+                contentEl.classList.add('hidden');
+                collapsedEl.classList.remove('hidden');
+                collapsedEl.classList.add('flex');
+                if (colName === 'left' || colName === 'right') {
+                    targetContainer.classList.remove('lg:w-[28%]', 'lg:w-[35%]');
+                    targetContainer.style.width = '3rem';
+                } else {
+                    targetContainer.classList.remove('flex-1');
+                    targetContainer.style.width = '3rem';
+                }
+            }
+        };
 
         function loadData() {
             try {
@@ -479,6 +665,9 @@
         function saveData() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                if (window.currentUser && window.syncCloudData) {
+                    window.syncCloudData(window.currentUser.uid);
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -494,7 +683,7 @@
             return appData[dateStr];
         }
 
-        function renderAll() {
+        window.renderAll = function() {
             const dayData = getOrCreateDayData(currentDateStr);
             
             dailyGoalInput.value = dayData.goal || '';
@@ -521,7 +710,7 @@
             renderAllIssuesTimeline();
             renderCalendar();
             lucide.createIcons();
-        }
+        };
 
         function updateGoalUI(isCompleted) {
             if (isCompleted) {
@@ -548,21 +737,21 @@
             });
 
             [btnInsights, btnIssues, btnCalendar].forEach(btn => {
-                btn.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200";
+                btn.className = "flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200";
             });
 
             if (tabName === 'insights') {
                 insightsTab.classList.remove('hidden');
                 insightsTab.classList.add('flex');
-                btnInsights.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-blue-600 text-white shadow";
+                btnInsights.className = "flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-blue-600 text-white shadow";
             } else if (tabName === 'issues') {
                 issuesTab.classList.remove('hidden');
                 issuesTab.classList.add('flex');
-                btnIssues.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-purple-600 text-white shadow";
+                btnIssues.className = "flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-purple-600 text-white shadow";
             } else {
                 calendarTab.classList.remove('hidden');
                 calendarTab.classList.add('flex');
-                btnCalendar.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-indigo-600 text-white shadow";
+                btnCalendar.className = "flex-1 py-1.5 px-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-indigo-600 text-white shadow";
             }
         };
 
@@ -577,7 +766,11 @@
                 btn.classList.add('text-slate-400');
             });
 
-            const targetContent = document.getElementById(`tab-${tabName}`);
+            let targetId = 'tab-journal';
+            if (tabName === 'tasks') targetId = 'tab-tasks';
+            if (tabName === 'insights' || tabName === 'calendar') targetId = 'tab-right';
+
+            const targetContent = document.getElementById(targetId);
             const targetNav = document.getElementById(`nav-btn-${tabName}`);
 
             if (targetContent) {
@@ -589,14 +782,10 @@
                 targetNav.classList.add('text-blue-400', 'bg-blue-900/30', 'border', 'border-blue-500/30');
             }
 
-            const mobileTitle = document.getElementById('mobile-right-tab-title');
-            if (mobileTitle) {
-                if (tabName === 'insights') mobileTitle.textContent = '学び・課題';
-                if (tabName === 'calendar') mobileTitle.textContent = '月間カレンダー';
-            }
+            if (tabName === 'insights') switchRightTab('insights');
+            if (tabName === 'calendar') switchRightTab('calendar');
         };
 
-        // ★ 月間カレンダー描画（8時間前判定連動）
         function renderCalendar() {
             const grid = document.getElementById('calendar-grid');
             const title = document.getElementById('cal-month-title');
@@ -622,7 +811,6 @@
                 const isToday = dateStr === getTodayString();
 
                 const activeMustDoCount = cellTasks.filter(t => !t.completed).length;
-                // ★ 8時間前（16時以降）かつ未完了タスクがある場合のみ赤枠フラグ
                 const isUrgent = isUrgentTask(dateStr) && activeMustDoCount > 0;
 
                 const cell = document.createElement('div');
@@ -821,7 +1009,6 @@
             lucide.createIcons();
         }
 
-        // ★ タスク一覧描画（8時間前判定連動：16時以降のみ赤枠、それ以前は青枠）
         function renderTasks() {
             const dayData = getOrCreateDayData(currentDateStr);
             tasksList.innerHTML = '';
@@ -874,16 +1061,13 @@
                         <i data-lucide="moon" class="w-3 h-3"></i> ${task.originalDate}に実行予定
                     </span>`;
                 } else {
-                    // 今日やるタスク（8時間前＝16:00以降かどうかの判定）
                     const urgent = isUrgentTask(task.originalDate);
                     if (urgent) {
-                        // 8時間前（16:00以降）：赤枠 ＋ 赤バッジ
                         cardStyle = "bg-gradient-to-r from-rose-950/30 to-[#1A2336] border-2 border-rose-500/80 shadow-lg shadow-rose-950/30";
                         badgeMarkup = `<span class="inline-flex items-center gap-1 text-[11px] font-extrabold text-rose-200 bg-rose-600/80 px-2.5 py-0.5 rounded border border-rose-400/60 shadow-sm">
                             🔥 本日必達 (8h以内)
                         </span>`;
                     } else {
-                        // 16:00前：標準の落ち着いた青枠
                         cardStyle = "bg-[#1A2336] border-slate-700/60 hover:border-blue-500/50";
                         badgeMarkup = `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded border border-blue-700/40">
                             <i data-lucide="target" class="w-3 h-3"></i> 本日実行
@@ -1138,8 +1322,6 @@
                 const good = dayData.good || '';
                 const issuePairs = dayData.issuePairs || [];
                 
-                const fullText = (goal + ' ' + journal + ' ' + insights + ' ' + good).toLowerCase();
-
                 let response = `【分析と客観的フィードバック】\n\n`;
 
                 if (goal) {
@@ -1241,29 +1423,23 @@
 
         function shareTodayJournal() {
             const text = generateShareText();
-            const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
+            copyToClipboard(text, false);
+
+            const lineShareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
 
             if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                window.open(lineUrl, '_blank');
+                window.open(`https://line.me/R/share?text=${encodeURIComponent(text)}`, '_blank');
                 showToast('LINEを起動します');
-            } else if (navigator.share) {
-                navigator.share({
-                    title: `${currentDateStr} の振り返り`,
-                    text: text
-                }).catch((err) => {
-                    if (err.name !== 'AbortError') copyToClipboard(text);
-                });
             } else {
-                copyToClipboard(text);
+                window.open(lineShareUrl, '_blank', 'width=600,height=500');
+                showToast('LINE送信画面を開きました（本文をクリップボードにもコピー済み）');
             }
         }
 
-        function copyToClipboard(text) {
+        function copyToClipboard(text, notify = true) {
             navigator.clipboard.writeText(text).then(() => {
-                showToast('振り返り内容をコピーしました！');
-            }).catch(() => {
-                alert('コピーに失敗しました');
-            });
+                if (notify) showToast('振り返り内容をコピーしました！');
+            }).catch(() => {});
         }
 
         window.deleteIssuePair = function(pairId) {
@@ -1343,11 +1519,11 @@
             }
         };
 
-        function showToast(msg) {
+        window.showToast = function(msg) {
             document.getElementById('toast-message').textContent = msg;
             toast.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2500);
-        }
+        };
 
         function escapeHtml(str) {
             return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]);
