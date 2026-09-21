@@ -31,11 +31,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
-            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
             background: #0B0F19;
@@ -47,69 +47,100 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #3B82F6;
         }
+        .slide-up-fast {
+            transition: transform 0.15s cubic-bezier(0, 0, 0.2, 1);
+        }
     </style>
 </head>
 <body class="bg-[#0B0F19] text-slate-200 min-h-screen lg:h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden">
 
     <!-- ヘッダーエリア -->
     <header class="bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 shrink-0 z-30 sticky top-0">
-        <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-2">
+        <div class="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5">
+            
             <!-- 日付選択 & ナビゲーション -->
-            <div class="flex items-center gap-1.5">
-                <button id="prev-day-btn" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="前日へ">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                </button>
-                <div class="relative flex items-center bg-slate-800/50 border border-slate-700/60 rounded-xl px-2.5 py-1">
-                    <i data-lucide="calendar" class="w-4 h-4 text-blue-400 mr-1.5"></i>
-                    <input type="date" id="date-picker" class="bg-transparent text-slate-100 font-semibold text-sm sm:text-base focus:outline-none cursor-pointer">
+            <div class="flex items-center gap-1.5 w-full md:w-auto justify-between md:justify-start shrink-0">
+                <div class="flex items-center gap-1">
+                    <button id="prev-day-btn" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="前日へ">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    <div class="relative flex items-center bg-slate-800/50 border border-slate-700/60 rounded-xl px-2.5 py-1">
+                        <i data-lucide="calendar" class="w-4 h-4 text-blue-400 mr-1.5"></i>
+                        <input type="date" id="date-picker" class="bg-transparent text-slate-100 font-semibold text-xs sm:text-sm focus:outline-none cursor-pointer">
+                    </div>
+                    <button id="next-day-btn" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="翌日へ">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                    <button id="today-btn" class="text-xs bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 border border-blue-700/50 px-2 py-1 rounded-lg font-medium transition">
+                        今日
+                    </button>
                 </div>
-                <button id="next-day-btn" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="翌日へ">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
-                <button id="today-btn" class="text-xs bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 border border-blue-700/50 px-2.5 py-1.5 rounded-lg font-medium transition">
-                    今日
-                </button>
+
+                <!-- スマホ用 保存ボタン -->
+                <div class="flex md:hidden items-center gap-1.5">
+                    <button onclick="saveData(); showToast('保存しました！');" class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-xs font-medium">
+                        保存
+                    </button>
+                </div>
             </div>
 
-            <!-- バックアップ・保存機能 -->
-            <div class="flex items-center gap-2">
+            <!-- 今日の目標 🎯 -->
+            <div id="goal-container" class="w-full md:flex-1 max-w-xl bg-gradient-to-r from-amber-950/40 via-indigo-950/40 to-blue-950/40 border border-amber-500/40 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-lg transition">
+                <button id="toggle-goal-btn" class="w-5 h-5 rounded-full border border-amber-500/80 flex items-center justify-center shrink-0 text-transparent hover:bg-amber-500/20 transition">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                </button>
+                <div class="flex items-center gap-1 shrink-0 text-amber-400 font-bold text-xs sm:text-sm">
+                    <i data-lucide="target" class="w-4 h-4"></i>
+                    <span>目標:</span>
+                </div>
+                <input type="text" id="daily-goal-input" 
+                    class="w-full bg-transparent text-xs sm:text-sm text-slate-100 placeholder-slate-500 font-medium focus:outline-none" 
+                    placeholder="例：英語読解3章完了＆ポモドーロで超集中！">
+            </div>
+
+            <!-- PC用 バックアップ・保存機能 -->
+            <div class="hidden md:flex items-center gap-2 shrink-0">
                 <button id="export-data-btn" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1" title="全データを保存">
                     <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
-                    <span class="hidden md:inline">バックアップ</span>
+                    <span>バックアップ</span>
                 </button>
                 <label class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1 cursor-pointer" title="データの復元">
                     <i data-lucide="upload" class="w-4 h-4 text-amber-400"></i>
-                    <span class="hidden md:inline">復元</span>
+                    <span>復元</span>
                     <input type="file" id="import-data-file" accept=".json" class="hidden">
                 </label>
-                <button id="manual-save-btn" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-medium shadow-lg shadow-blue-900/30 transition active:scale-95">
+                <button id="manual-save-btn" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium shadow-lg shadow-blue-900/30 transition active:scale-95">
                     <i data-lucide="save" class="w-4 h-4"></i>
                     <span>保存</span>
                 </button>
             </div>
         </div>
 
-        <!-- スマホ専用：上部タブナビゲーション（画面幅1023px以下で表示） -->
-        <nav class="lg:hidden flex items-center justify-around border-t border-slate-800/80 pt-2 mt-2">
-            <button onclick="switchMobileTab('tasks')" id="nav-btn-tasks" class="mobile-nav-btn flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-slate-400 font-medium text-xs transition w-1/3">
-                <i data-lucide="check-square" class="w-4 h-4"></i>
+        <!-- スマホ専用：4タブナビゲーション -->
+        <nav class="lg:hidden flex items-center justify-around border-t border-slate-800/80 pt-2 mt-2 gap-1 overflow-x-auto">
+            <button onclick="switchMobileTab('tasks')" id="nav-btn-tasks" class="mobile-nav-btn flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-slate-400 font-medium text-[11px] transition shrink-0">
+                <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
                 <span>タスク</span>
             </button>
-            <button onclick="switchMobileTab('journal')" id="nav-btn-journal" class="mobile-nav-btn active flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-blue-400 bg-blue-900/30 border border-blue-500/30 font-medium text-xs transition w-1/3">
-                <i data-lucide="book-open" class="w-4 h-4"></i>
+            <button onclick="switchMobileTab('journal')" id="nav-btn-journal" class="mobile-nav-btn active flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-blue-400 bg-blue-900/30 border border-blue-500/30 font-medium text-[11px] transition shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
                 <span>振り返り</span>
             </button>
-            <button onclick="switchMobileTab('insights')" id="nav-btn-insights" class="mobile-nav-btn flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-slate-400 font-medium text-xs transition w-1/3">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                <span>気づき</span>
+            <button onclick="switchMobileTab('insights')" id="nav-btn-insights" class="mobile-nav-btn flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-slate-400 font-medium text-[11px] transition shrink-0">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>学び・課題</span>
+            </button>
+            <button onclick="switchMobileTab('calendar')" id="nav-btn-calendar" class="mobile-nav-btn flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-slate-400 font-medium text-[11px] transition shrink-0">
+                <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
+                <span>カレンダー</span>
             </button>
         </nav>
     </header>
 
-    <!-- 3分割メインエリア (PC: 3カラム常時表示 / スマホ: 1カラム縦一列スクロール) -->
-    <div class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 md:p-6 lg:grid lg:grid-cols-12 gap-6 lg:overflow-hidden lg:h-[calc(100vh-65px)]">
+    <!-- メインエリア -->
+    <div class="flex-1 max-w-[1800px] w-full mx-auto p-3 sm:p-4 md:p-6 lg:grid lg:grid-cols-12 gap-5 lg:overflow-hidden lg:h-[calc(100vh-75px)]">
 
-        <!-- 1. タスク管理エリア (PC: 3/12 / スマホ: タブ1) -->
+        <!-- 1. 左カラム：タスク管理エリア -->
         <aside id="tab-tasks" class="mobile-tab-content hidden lg:flex lg:col-span-3 flex-col h-full overflow-hidden">
             <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
@@ -119,7 +150,6 @@
                     </h2>
                 </div>
 
-                <!-- タスク追加入力 -->
                 <div class="mb-3 space-y-2 shrink-0">
                     <input type="text" id="task-input" 
                         class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl px-3 py-2 text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
@@ -142,26 +172,23 @@
 
                 <!-- 凡例 -->
                 <div class="flex items-center gap-2 text-[10px] text-slate-400 pb-2 border-b border-slate-800/60 mb-2 shrink-0 flex-wrap">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span>今日</span>
+                    <span class="flex items-center gap-1 font-bold text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-500/40"></span>本日必達(8h以内)</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span>本日実行</span>
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span>未来・明日</span>
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>持ち越し</span>
                 </div>
 
-                <!-- スクロール可能なタスクエリア -->
-                <div class="flex-1 overflow-y-auto space-y-2.5 pr-1" id="tasks-list">
-                    <!-- タスク要素 -->
-                </div>
+                <div class="flex-1 overflow-y-auto space-y-2.5 pr-1" id="tasks-list"></div>
             </div>
         </aside>
 
-        <!-- 2. 振り返りノート (PC: 6/12 / スマホ: タブ2 - 縦一列縦スクロール) -->
-        <main id="tab-journal" class="mobile-tab-content flex flex-col lg:col-span-6 space-y-5 lg:overflow-y-auto lg:h-full pr-0 lg:pr-2 pb-12">
+        <!-- 2. 中央カラム：振り返りノート -->
+        <main id="tab-journal" class="mobile-tab-content flex flex-col lg:col-span-5 space-y-5 lg:overflow-y-auto lg:h-full pr-0 lg:pr-2 pb-12">
             <div class="border-b border-slate-800 pb-2 flex items-center justify-between sticky top-0 bg-[#0B0F19]/90 backdrop-blur-md pt-1 z-10">
                 <h2 class="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
                     <i data-lucide="book-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
                     今日の振り返りノート
                 </h2>
-                <!-- 共有ボタン -->
                 <button id="share-btn" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 px-2.5 py-1.5 rounded-xl text-xs font-medium transition">
                     <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
                     <span>共有</span>
@@ -190,14 +217,13 @@
                     placeholder="今日気づいたこと・学んだことは？"></textarea>
             </div>
 
-            <!-- 課題と解決策（セット追加機能） -->
+            <!-- 課題と解決策 -->
             <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
                 <label class="block text-sm sm:text-base font-semibold text-slate-200 flex items-center gap-2">
                     <i data-lucide="wrench" class="w-4 h-4 text-purple-400"></i>
                     課題と解決策 🎯
                 </label>
 
-                <!-- 課題セット追加フォーム -->
                 <div class="bg-[#1A2336] p-3 sm:p-4 rounded-xl border border-slate-700/60 space-y-2.5">
                     <div class="space-y-1">
                         <span class="text-[11px] text-purple-300 font-medium">現在の課題</span>
@@ -217,7 +243,6 @@
                     </button>
                 </div>
 
-                <!-- 登録済み課題＆解決策リスト -->
                 <div id="issue-pairs-list" class="space-y-2.5"></div>
             </div>
 
@@ -232,7 +257,7 @@
                     placeholder="うまくいったこと、嬉しかったことは？"></textarea>
             </div>
 
-            <!-- AIに相談する アクションセクション -->
+            <!-- AIに相談する -->
             <div class="bg-gradient-to-br from-[#182238] to-[#121827] border border-blue-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
@@ -250,29 +275,108 @@
                     </button>
                 </div>
 
-                <!-- AIの出力テキストエリア -->
                 <div id="ai-response-container" class="hidden space-y-2 pt-1">
-                    <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text">
-                        <!-- AIの回答 -->
-                    </div>
+                    <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text"></div>
                 </div>
             </div>
         </main>
 
-        <!-- 3. 気づき一覧タイムライン (PC: 3/12 / スマホ: タブ3) -->
-        <aside id="tab-insights" class="mobile-tab-content hidden lg:flex lg:col-span-3 flex-col h-full overflow-hidden">
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
+        <!-- 3. 右カラム：「学び・気づき」「課題・解決策」「カレンダー」の3タブエリア -->
+        <aside class="lg:col-span-4 flex flex-col h-full overflow-hidden relative">
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden relative">
+                
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
-                    <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
-                        学び・気づきタイムライン
+                    <div class="hidden lg:flex items-center bg-[#1A2336] p-1 rounded-xl border border-slate-700/60 w-full gap-1">
+                        <button onclick="switchRightTab('insights')" id="pc-right-tab-insights" class="flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-blue-600 text-white shadow">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                            <span>学び・気づき</span>
+                        </button>
+                        <button onclick="switchRightTab('issues')" id="pc-right-tab-issues" class="flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200">
+                            <i data-lucide="wrench" class="w-3.5 h-3.5 text-purple-400"></i>
+                            <span>課題と解決策</span>
+                        </button>
+                        <button onclick="switchRightTab('calendar')" id="pc-right-tab-calendar" class="flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200">
+                            <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-indigo-400"></i>
+                            <span>カレンダー</span>
+                        </button>
+                    </div>
+
+                    <h2 class="lg:hidden text-base font-bold text-slate-100 flex items-center gap-2">
+                        <span id="mobile-right-tab-title">学び・気づき</span>
                     </h2>
                 </div>
 
-                <!-- スクロール可能な「気づき」タイムライン -->
-                <div class="flex-1 overflow-y-auto space-y-3 pr-1" id="insights-timeline">
-                    <!-- タイムライン要素 -->
+                <!-- 学び・気づき タブ -->
+                <div id="tab-insights" class="mobile-tab-content pc-right-tab-content flex-1 flex-col overflow-hidden space-y-3">
+                    <div class="bg-[#1A2336] p-3 rounded-xl border border-amber-500/30 space-y-2 shrink-0">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                即時学びメモを追加
+                            </label>
+                            <span class="text-[10px] text-slate-400" id="insight-add-date-label">今日の日付に記録</span>
+                        </div>
+                        <textarea id="quick-insight-input" rows="2" class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg p-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500" placeholder="思ったこと・学びを忘れないうちにメモ..."></textarea>
+                        <div class="flex items-center justify-end gap-2">
+                            <button id="add-quick-insight-btn" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1">
+                                <i data-lucide="send" class="w-3 h-3"></i>
+                                <span>メモを追加</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="insights-timeline" class="flex-1 overflow-y-auto space-y-3 pr-1"></div>
                 </div>
+
+                <!-- 課題と解決策 タブ -->
+                <div id="tab-issues" class="mobile-tab-content pc-right-tab-content hidden flex-1 flex-col overflow-hidden space-y-3">
+                    <div class="bg-[#1A2336] p-3 rounded-xl border border-purple-500/30 space-y-2 shrink-0">
+                        <label class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                            新しい課題と解決策を登録
+                        </label>
+                        <input type="text" id="tab-issue-input" class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500" placeholder="直面している課題を入力">
+                        <input type="text" id="tab-solution-input" class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="具体的にどうやって克服するか">
+                        <button id="add-tab-issue-pair-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs py-1.5 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>登録して保存</span>
+                        </button>
+                    </div>
+
+                    <div id="all-issues-timeline" class="flex-1 overflow-y-auto space-y-2.5 pr-1"></div>
+                </div>
+
+                <!-- カレンダー タブ -->
+                <div id="tab-calendar" class="mobile-tab-content pc-right-tab-content hidden flex-1 flex-col overflow-hidden relative">
+                    <div class="flex items-center justify-between mb-2 shrink-0">
+                        <button id="cal-prev-month" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                        <span id="cal-month-title" class="text-xs sm:text-sm font-bold px-1 text-slate-200"></span>
+                        <button id="cal-next-month" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] sm:text-xs font-bold text-slate-400 mb-1">
+                        <span class="text-rose-400">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="text-blue-400">土</span>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 flex-1 overflow-y-auto pr-1"></div>
+                    <p class="text-[10px] text-slate-500 mt-2 shrink-0 text-center">※ 日付枠タップで詳細・タスク追加が開きます</p>
+
+                    <!-- カレンダー内ボトムスライドパネル -->
+                    <div id="cal-slide-panel" class="absolute inset-x-0 bottom-0 h-[58%] bg-[#1A2336] border-t-2 border-indigo-500 rounded-t-2xl p-3 shadow-2xl flex flex-col z-20 translate-y-full slide-up-fast">
+                        <div class="flex items-center justify-between border-b border-slate-700/80 pb-2 mb-2 shrink-0">
+                            <h3 class="font-bold text-slate-100 text-xs flex items-center gap-1.5">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                <span id="cal-modal-date-label"></span> のタスク
+                            </h3>
+                            <button onclick="closeCalModal()" class="text-slate-400 hover:text-slate-100 p-0.5"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex gap-1.5 mb-2 shrink-0">
+                            <input type="text" id="cal-modal-input" class="flex-1 bg-[#0B0F19] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="タスクを入力">
+                            <button onclick="addCalModalTask()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs shrink-0">追加</button>
+                        </div>
+                        <div id="cal-modal-task-list" class="flex-1 overflow-y-auto space-y-1.5 pr-0.5"></div>
+                    </div>
+
+                </div>
+
             </div>
         </aside>
 
@@ -289,12 +393,18 @@
         const STORAGE_KEY = 'nightly_journal_data_v2';
         let currentDateStr = getTodayString();
         let appData = loadData();
+        let calCurrentYearMonth = new Date();
+        let modalSelectedDate = '';
 
         // DOM Elements
         const datePicker = document.getElementById('date-picker');
         const prevDayBtn = document.getElementById('prev-day-btn');
         const nextDayBtn = document.getElementById('next-day-btn');
         const todayBtn = document.getElementById('today-btn');
+
+        const goalContainer = document.getElementById('goal-container');
+        const toggleGoalBtn = document.getElementById('toggle-goal-btn');
+        const dailyGoalInput = document.getElementById('daily-goal-input');
 
         const reflectionJournal = document.getElementById('reflection-journal');
         const reflectionInsights = document.getElementById('reflection-insights');
@@ -311,6 +421,15 @@
         const addTaskBtn = document.getElementById('add-task-btn');
         const tasksList = document.getElementById('tasks-list');
         const insightsTimeline = document.getElementById('insights-timeline');
+
+        const quickInsightInput = document.getElementById('quick-insight-input');
+        const addQuickInsightBtn = document.getElementById('add-quick-insight-btn');
+        const insightAddDateLabel = document.getElementById('insight-add-date-label');
+
+        const tabIssueInput = document.getElementById('tab-issue-input');
+        const tabSolutionInput = document.getElementById('tab-solution-input');
+        const addTabIssuePairBtn = document.getElementById('add-tab-issue-pair-btn');
+        const allIssuesTimeline = document.getElementById('all-issues-timeline');
 
         const askAiBtn = document.getElementById('ask-ai-btn');
         const aiResponseContainer = document.getElementById('ai-response-container');
@@ -339,6 +458,14 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
+        // ★ 8時間以内判定関数（対象日付が今日、かつ現時刻が16:00以降の場合にtrue）
+        function isUrgentTask(dateStr) {
+            const todayStr = getTodayString();
+            if (dateStr !== todayStr) return false;
+            const currentHour = new Date().getHours();
+            return currentHour >= 16; // 16:00〜23:59 (締切23:59の8時間前以降)
+        }
+
         function loadData() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
@@ -359,7 +486,7 @@
 
         function getOrCreateDayData(dateStr) {
             if (!appData[dateStr]) {
-                appData[dateStr] = { journal: '', insights: '', good: '', tasks: [], issuePairs: [], aiAnalysis: '' };
+                appData[dateStr] = { goal: '', goalCompleted: false, journal: '', insights: '', good: '', tasks: [], issuePairs: [], aiAnalysis: '' };
             }
             if (!appData[dateStr].issuePairs) {
                 appData[dateStr].issuePairs = [];
@@ -369,9 +496,17 @@
 
         function renderAll() {
             const dayData = getOrCreateDayData(currentDateStr);
+            
+            dailyGoalInput.value = dayData.goal || '';
+            updateGoalUI(dayData.goalCompleted);
+
             reflectionJournal.value = dayData.journal || '';
             reflectionInsights.value = dayData.insights || '';
             reflectionGood.value = dayData.good || '';
+
+            if (insightAddDateLabel) {
+                insightAddDateLabel.textContent = `[${currentDateStr}] に記録`;
+            }
 
             if (dayData.aiAnalysis) {
                 aiResponseText.textContent = dayData.aiAnalysis;
@@ -383,10 +518,54 @@
             renderIssuePairs();
             renderTasks();
             renderInsightsTimeline();
+            renderAllIssuesTimeline();
+            renderCalendar();
             lucide.createIcons();
         }
 
-        // スマホ用上部タブ切り替え関数
+        function updateGoalUI(isCompleted) {
+            if (isCompleted) {
+                dailyGoalInput.classList.add('line-through', 'text-slate-500');
+                toggleGoalBtn.className = "w-5 h-5 rounded-full border border-emerald-500 bg-emerald-600 text-white flex items-center justify-center shrink-0 transition";
+            } else {
+                dailyGoalInput.classList.remove('line-through', 'text-slate-500');
+                toggleGoalBtn.className = "w-5 h-5 rounded-full border border-amber-500/80 text-transparent hover:bg-amber-500/20 flex items-center justify-center shrink-0 transition";
+            }
+        }
+
+        window.switchRightTab = function(tabName) {
+            const insightsTab = document.getElementById('tab-insights');
+            const issuesTab = document.getElementById('tab-issues');
+            const calendarTab = document.getElementById('tab-calendar');
+            
+            const btnInsights = document.getElementById('pc-right-tab-insights');
+            const btnIssues = document.getElementById('pc-right-tab-issues');
+            const btnCalendar = document.getElementById('pc-right-tab-calendar');
+
+            [insightsTab, issuesTab, calendarTab].forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            });
+
+            [btnInsights, btnIssues, btnCalendar].forEach(btn => {
+                btn.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition text-slate-400 hover:text-slate-200";
+            });
+
+            if (tabName === 'insights') {
+                insightsTab.classList.remove('hidden');
+                insightsTab.classList.add('flex');
+                btnInsights.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-blue-600 text-white shadow";
+            } else if (tabName === 'issues') {
+                issuesTab.classList.remove('hidden');
+                issuesTab.classList.add('flex');
+                btnIssues.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-purple-600 text-white shadow";
+            } else {
+                calendarTab.classList.remove('hidden');
+                calendarTab.classList.add('flex');
+                btnCalendar.className = "flex-1 py-1.5 px-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition bg-indigo-600 text-white shadow";
+            }
+        };
+
         window.switchMobileTab = function(tabName) {
             document.querySelectorAll('.mobile-tab-content').forEach(el => {
                 el.classList.add('hidden');
@@ -409,6 +588,151 @@
                 targetNav.classList.remove('text-slate-400');
                 targetNav.classList.add('text-blue-400', 'bg-blue-900/30', 'border', 'border-blue-500/30');
             }
+
+            const mobileTitle = document.getElementById('mobile-right-tab-title');
+            if (mobileTitle) {
+                if (tabName === 'insights') mobileTitle.textContent = '学び・課題';
+                if (tabName === 'calendar') mobileTitle.textContent = '月間カレンダー';
+            }
+        };
+
+        // ★ 月間カレンダー描画（8時間前判定連動）
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const title = document.getElementById('cal-month-title');
+            grid.innerHTML = '';
+
+            const year = calCurrentYearMonth.getFullYear();
+            const month = calCurrentYearMonth.getMonth();
+            title.textContent = `${year}年 ${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'p-1 rounded bg-[#1A2336]/20 border border-transparent min-h-[64px]';
+                grid.appendChild(emptyCell);
+            }
+
+            for (let d = 1; d <= lastDate; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const cellTasks = (appData[dateStr] && appData[dateStr].tasks) ? appData[dateStr].tasks : [];
+                const isSelected = dateStr === currentDateStr;
+                const isToday = dateStr === getTodayString();
+
+                const activeMustDoCount = cellTasks.filter(t => !t.completed).length;
+                // ★ 8時間前（16時以降）かつ未完了タスクがある場合のみ赤枠フラグ
+                const isUrgent = isUrgentTask(dateStr) && activeMustDoCount > 0;
+
+                const cell = document.createElement('div');
+
+                let cellBorderStyle = 'border-slate-800/80 bg-[#1A2336]/60 hover:bg-slate-800/80';
+                if (isSelected) {
+                    cellBorderStyle = 'border-indigo-500 bg-indigo-950/40 ring-1 ring-indigo-500';
+                } else if (isUrgent) {
+                    cellBorderStyle = 'border-rose-500/80 bg-rose-950/20 ring-2 ring-rose-500/60 hover:bg-rose-900/30';
+                } else if (isToday) {
+                    cellBorderStyle = 'border-blue-500/60 bg-blue-900/20';
+                }
+
+                cell.className = `p-1 min-h-[68px] rounded border flex flex-col justify-start items-stretch cursor-pointer transition text-xs space-y-0.5 overflow-hidden ${cellBorderStyle}`;
+                cell.onclick = () => openCalModal(dateStr);
+
+                let taskListMarkup = '';
+                const maxVisibleTasks = 2;
+                const visibleTasks = cellTasks.slice(0, maxVisibleTasks);
+                const remainingCount = cellTasks.length - maxVisibleTasks;
+
+                visibleTasks.forEach(t => {
+                    if (t.completed) {
+                        taskListMarkup += `<div class="text-[10px] truncate px-0.5 py-0.5 rounded bg-slate-800/80 text-slate-500 line-through leading-tight">${escapeHtml(t.text)}</div>`;
+                    } else if (isUrgent) {
+                        taskListMarkup += `<div class="text-[10px] truncate px-0.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/60 text-rose-200 font-semibold leading-tight">${escapeHtml(t.text)}</div>`;
+                    } else {
+                        taskListMarkup += `<div class="text-[10px] truncate px-0.5 py-0.5 rounded bg-blue-950/90 border border-blue-600/50 text-blue-200 font-medium leading-tight">${escapeHtml(t.text)}</div>`;
+                    }
+                });
+
+                if (remainingCount > 0) {
+                    taskListMarkup += `<div class="text-[8px] text-slate-400 font-bold px-0.5">+${remainingCount}件</div>`;
+                }
+
+                cell.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-800/50 pb-0.5 mb-0.5 shrink-0">
+                        <span class="font-bold text-[10px] ${isUrgent ? 'text-rose-400 font-extrabold' : (isToday ? 'text-blue-400' : 'text-slate-300')}">${d}</span>
+                        <div class="flex items-center gap-1">
+                            ${isUrgent ? `<span class="text-[8px] font-bold px-1 py-0.2 rounded bg-rose-600 text-white">🔥${activeMustDoCount}</span>` : ''}
+                            ${cellTasks.length > 0 && !isUrgent ? `<span class="text-[8px] px-1 rounded-full bg-slate-800 text-slate-400 font-mono">${cellTasks.length}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="space-y-0.5 overflow-hidden flex-1">
+                        ${taskListMarkup}
+                    </div>
+                `;
+                grid.appendChild(cell);
+            }
+        }
+
+        window.openCalModal = function(dateStr) {
+            modalSelectedDate = dateStr;
+            document.getElementById('cal-modal-date-label').textContent = dateStr;
+            renderCalModalTasks();
+            
+            const panel = document.getElementById('cal-slide-panel');
+            panel.classList.remove('translate-y-full');
+        };
+
+        window.closeCalModal = function() {
+            const panel = document.getElementById('cal-slide-panel');
+            panel.classList.add('translate-y-full');
+        };
+
+        function renderCalModalTasks() {
+            const list = document.getElementById('cal-modal-task-list');
+            list.innerHTML = '';
+            const dayData = getOrCreateDayData(modalSelectedDate);
+            const tasks = dayData.tasks || [];
+
+            if (tasks.length === 0) {
+                list.innerHTML = `<div class="text-slate-500 text-xs py-2 text-center">タスクが登録されていません</div>`;
+                return;
+            }
+
+            tasks.forEach(t => {
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-1.5 rounded bg-[#0B0F19] border border-slate-700/60 ${t.completed ? 'opacity-50' : ''}`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                        <button onclick="toggleUnifiedTask('${modalSelectedDate}', '${t.id}', 'today'); renderCalModalTasks();" class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${t.completed ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-500'}">
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                        </button>
+                        <span class="text-xs truncate ${t.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHtml(t.text)}</span>
+                    </div>
+                    <button onclick="deleteUnifiedTask('${modalSelectedDate}', '${t.id}'); renderCalModalTasks();" class="text-slate-500 hover:text-rose-400 p-0.5 shrink-0"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        window.addCalModalTask = function() {
+            const input = document.getElementById('cal-modal-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            getOrCreateDayData(modalSelectedDate).tasks.push({
+                id: 'task_' + Date.now(),
+                text: text,
+                completed: false,
+                createdDate: currentDateStr
+            });
+
+            input.value = '';
+            saveData();
+            renderAll();
+            renderCalModalTasks();
+            showToast(`[${modalSelectedDate}] に追加しました`);
         };
 
         function renderIssuePairs() {
@@ -421,23 +745,83 @@
             }
 
             dayData.issuePairs.forEach((pair) => {
+                const isCompleted = !!pair.completed;
                 const card = document.createElement('div');
-                card.className = 'p-3 bg-[#1A2336] border border-slate-700/60 rounded-xl space-y-1.5 relative group';
+                card.className = `p-3 bg-[#1A2336] border border-slate-700/60 rounded-xl space-y-1.5 relative group ${isCompleted ? 'opacity-50' : ''}`;
+                
+                const statusBadge = isCompleted 
+                    ? `<span class="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 font-bold px-2.5 py-1 rounded-lg text-xs"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> ✨ 克服済み</span>`
+                    : `<span class="inline-flex items-center gap-1 bg-purple-900/80 border border-purple-500/70 text-purple-200 font-bold px-2.5 py-1 rounded-lg text-xs"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-400"></i> 🔥 未克服</span>`;
+
                 card.innerHTML = `
-                    <button onclick="deleteIssuePair('${pair.id}')" class="absolute top-2 right-2 text-slate-500 hover:text-rose-400 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
-                    <div class="text-xs text-purple-300 flex items-start gap-1.5 pr-6">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-1">
+                        <button onclick="toggleIssuePair('${currentDateStr}', '${pair.id}')" class="flex items-center gap-2">
+                            ${statusBadge}
+                        </button>
+                        <button onclick="deleteIssuePair('${pair.id}')" class="text-slate-500 hover:text-rose-400 p-0.5"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="text-xs text-purple-300 flex items-start gap-1.5 ${isCompleted ? 'line-through text-slate-500' : ''}">
                         <span class="font-bold shrink-0">課題:</span>
                         <span>${escapeHtml(pair.issue)}</span>
                     </div>
-                    <div class="text-xs text-emerald-300 flex items-start gap-1.5 pr-6">
+                    <div class="text-xs text-emerald-300 flex items-start gap-1.5 ${isCompleted ? 'line-through text-slate-500' : ''}">
                         <span class="font-bold shrink-0">解決策:</span>
                         <span>${escapeHtml(pair.solution)}</span>
                     </div>
                 `;
                 issuePairsList.appendChild(card);
             });
+            lucide.createIcons();
         }
 
+        function renderAllIssuesTimeline() {
+            allIssuesTimeline.innerHTML = '';
+            const allPairs = [];
+
+            Object.keys(appData).sort().reverse().forEach(dateKey => {
+                const pairs = appData[dateKey].issuePairs || [];
+                pairs.forEach(p => {
+                    allPairs.push({ date: dateKey, ...p });
+                });
+            });
+
+            if (allPairs.length === 0) {
+                allIssuesTimeline.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">蓄積された課題と解決策がここに表示されます</div>`;
+                return;
+            }
+
+            allPairs.forEach(item => {
+                const isCompleted = !!item.completed;
+                const card = document.createElement('div');
+                card.className = `p-3 bg-[#1A2336] border border-purple-500/30 rounded-xl space-y-1.5 relative ${isCompleted ? 'opacity-50' : ''}`;
+
+                const statusBadge = isCompleted 
+                    ? `<span class="inline-flex items-center gap-1 bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 font-bold px-2 py-0.5 rounded-md text-[11px]"><i data-lucide="check" class="w-3 h-3"></i> 克服済み</span>`
+                    : `<span class="inline-flex items-center gap-1 bg-purple-900/90 border border-purple-400/80 text-purple-100 font-extrabold px-2.5 py-0.5 rounded-md text-[12px] shadow-sm"><i data-lucide="flame" class="w-3.5 h-3.5 text-amber-400"></i> 未克服</span>`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <span class="flex items-center gap-1 text-[11px] text-slate-400 font-medium"><i data-lucide="calendar" class="w-3 h-3"></i> ${item.date}</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="toggleIssuePair('${item.date}', '${item.id}')" class="transition hover:scale-105">
+                                ${statusBadge}
+                            </button>
+                            <button onclick="deleteIssuePairFromDate('${item.date}', '${item.id}')" class="text-slate-500 hover:text-rose-400 p-0.5"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-purple-200 pt-0.5 ${isCompleted ? 'line-through text-slate-500' : ''}">
+                        <span class="font-bold text-purple-300">課題:</span> ${escapeHtml(item.issue)}
+                    </div>
+                    <div class="text-xs text-emerald-200 ${isCompleted ? 'line-through text-slate-500' : ''}">
+                        <span class="font-bold text-emerald-300">解決策:</span> ${escapeHtml(item.solution)}
+                    </div>
+                `;
+                allIssuesTimeline.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // ★ タスク一覧描画（8時間前判定連動：16時以降のみ赤枠、それ以前は青枠）
         function renderTasks() {
             const dayData = getOrCreateDayData(currentDateStr);
             tasksList.innerHTML = '';
@@ -476,7 +860,7 @@
             allTasks.forEach((task) => {
                 const taskEl = document.createElement('div');
                 
-                let cardStyle = "bg-[#1A2336] border-slate-700/60";
+                let cardStyle = "";
                 let badgeMarkup = "";
 
                 if (task.type === 'carried') {
@@ -490,13 +874,24 @@
                         <i data-lucide="moon" class="w-3 h-3"></i> ${task.originalDate}に実行予定
                     </span>`;
                 } else {
-                    cardStyle = "bg-[#1A2336] border-slate-700/60 hover:border-blue-500/50";
-                    badgeMarkup = `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded border border-blue-700/40">
-                        <i data-lucide="target" class="w-3 h-3"></i> 本日実行
-                    </span>`;
+                    // 今日やるタスク（8時間前＝16:00以降かどうかの判定）
+                    const urgent = isUrgentTask(task.originalDate);
+                    if (urgent) {
+                        // 8時間前（16:00以降）：赤枠 ＋ 赤バッジ
+                        cardStyle = "bg-gradient-to-r from-rose-950/30 to-[#1A2336] border-2 border-rose-500/80 shadow-lg shadow-rose-950/30";
+                        badgeMarkup = `<span class="inline-flex items-center gap-1 text-[11px] font-extrabold text-rose-200 bg-rose-600/80 px-2.5 py-0.5 rounded border border-rose-400/60 shadow-sm">
+                            🔥 本日必達 (8h以内)
+                        </span>`;
+                    } else {
+                        // 16:00前：標準の落ち着いた青枠
+                        cardStyle = "bg-[#1A2336] border-slate-700/60 hover:border-blue-500/50";
+                        badgeMarkup = `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded border border-blue-700/40">
+                            <i data-lucide="target" class="w-3 h-3"></i> 本日実行
+                        </span>`;
+                    }
                 }
 
-                taskEl.className = `flex flex-col p-3 border rounded-xl gap-2 transition ${cardStyle} ${task.completed ? 'opacity-40' : ''}`;
+                taskEl.className = `flex flex-col p-3 border rounded-xl gap-2 transition ${cardStyle} ${task.completed ? 'opacity-40 grayscale-[50%]' : ''}`;
                 
                 if (task.isEditing) {
                     taskEl.innerHTML = `
@@ -521,7 +916,7 @@
                             <button onclick="toggleUnifiedTask('${task.originalDate}', '${task.id}', '${task.type}')" class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition ${
                                 task.completed ? 'bg-blue-600 border-blue-600 text-white' : 
                                 (task.type === 'carried' ? 'border-amber-500 text-transparent hover:bg-amber-500/20' : 
-                                (task.type === 'future' ? 'border-purple-500 text-transparent hover:bg-purple-500/20' : 'border-slate-500 text-transparent hover:bg-blue-500/20'))
+                                (task.type === 'future' ? 'border-purple-500 text-transparent hover:bg-purple-500/20' : 'border-blue-400 text-transparent hover:bg-blue-500/20'))
                             }">
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
                             </button>
@@ -531,6 +926,7 @@
                 }
                 tasksList.appendChild(taskEl);
             });
+            lucide.createIcons();
         }
 
         function renderInsightsTimeline() {
@@ -551,14 +947,14 @@
                 const card = document.createElement('div');
                 card.className = 'p-3 bg-[#1A2336] border border-slate-700/50 rounded-xl space-y-1';
                 card.innerHTML = `
-                    <div class="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
-                        <i data-lucide="calendar" class="w-3 h-3"></i>
-                        ${item.date}
+                    <div class="text-[11px] font-semibold text-amber-400 flex items-center justify-between">
+                        <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${item.date}</span>
                     </div>
                     <p class="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(item.text)}</p>
                 `;
                 insightsTimeline.appendChild(card);
             });
+            lucide.createIcons();
         }
 
         function setupEventListeners() {
@@ -572,6 +968,65 @@
                 currentDateStr = getTodayString();
                 datePicker.value = currentDateStr;
                 renderAll();
+            });
+
+            toggleGoalBtn.addEventListener('click', () => {
+                const dayData = getOrCreateDayData(currentDateStr);
+                dayData.goalCompleted = !dayData.goalCompleted;
+                saveData();
+                updateGoalUI(dayData.goalCompleted);
+                if (dayData.goalCompleted) showToast('今日の目標をクリアしました！ 🎉');
+            });
+
+            dailyGoalInput.addEventListener('input', (e) => {
+                getOrCreateDayData(currentDateStr).goal = e.target.value;
+                saveData();
+            });
+
+            document.getElementById('cal-prev-month').addEventListener('click', () => {
+                calCurrentYearMonth.setMonth(calCurrentYearMonth.getMonth() - 1);
+                renderCalendar();
+            });
+            document.getElementById('cal-next-month').addEventListener('click', () => {
+                calCurrentYearMonth.setMonth(calCurrentYearMonth.getMonth() + 1);
+                renderCalendar();
+            });
+
+            addQuickInsightBtn.addEventListener('click', () => {
+                const text = quickInsightInput.value.trim();
+                if (!text) return;
+
+                const dayData = getOrCreateDayData(currentDateStr);
+                if (dayData.insights && dayData.insights.trim()) {
+                    dayData.insights += `\n・${text}`;
+                } else {
+                    dayData.insights = `・${text}`;
+                }
+
+                quickInsightInput.value = '';
+                saveData();
+                renderAll();
+                showToast(`[${currentDateStr}] に学びメモを追加しました！`);
+            });
+
+            addTabIssuePairBtn.addEventListener('click', () => {
+                const issue = tabIssueInput.value.trim();
+                const solution = tabSolutionInput.value.trim();
+                if (!issue && !solution) return;
+
+                const dayData = getOrCreateDayData(currentDateStr);
+                dayData.issuePairs.push({
+                    id: 'pair_' + Date.now(),
+                    issue: issue,
+                    solution: solution,
+                    completed: false
+                });
+
+                tabIssueInput.value = '';
+                tabSolutionInput.value = '';
+                saveData();
+                renderAll();
+                showToast(`[${currentDateStr}] に課題と解決策を追加しました！`);
             });
 
             const handleInput = (field, val) => {
@@ -602,14 +1057,15 @@
                 dayData.issuePairs.push({
                     id: 'pair_' + Date.now(),
                     issue: issue,
-                    solution: solution
+                    solution: solution,
+                    completed: false
                 });
 
                 issueInput.value = '';
                 solutionInput.value = '';
                 saveData();
-                renderIssuePairs();
-                lucide.createIcons();
+                renderAll();
+                showToast('課題と解決策を追加しました！');
             });
 
             taskInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
@@ -653,65 +1109,69 @@
                 reader.readAsText(file);
             });
 
-            // スマホ初期画面設定
             if (window.innerWidth < 1024) {
                 switchMobileTab('journal');
             }
         }
 
-        // 具体的かつ客観的なAIアドバイス生成ロジック
+        window.toggleIssuePair = function(dateStr, pairId) {
+            if (appData[dateStr] && appData[dateStr].issuePairs) {
+                const pair = appData[dateStr].issuePairs.find(p => p.id === pairId);
+                if (pair) {
+                    pair.completed = !pair.completed;
+                    saveData();
+                    renderAll();
+                    if (pair.completed) showToast('課題を克服しました！ ✨');
+                }
+            }
+        };
+
         function generatePersonalizedAdvice() {
             const dayData = getOrCreateDayData(currentDateStr);
             aiResponseContainer.classList.remove('hidden');
             aiResponseText.textContent = "AIアドバイザーが文章のロジック、課題設定の妥当性、改善点を分析中...";
 
             setTimeout(() => {
+                const goal = dayData.goal || '';
                 const journal = dayData.journal || '';
                 const insights = dayData.insights || '';
                 const good = dayData.good || '';
                 const issuePairs = dayData.issuePairs || [];
                 
-                const fullText = (journal + ' ' + insights + ' ' + good).toLowerCase();
+                const fullText = (goal + ' ' + journal + ' ' + insights + ' ' + good).toLowerCase();
 
                 let response = `【分析と客観的フィードバック】\n\n`;
 
+                if (goal) {
+                    response += `0. 本日の目標分析\n・設定された目標: 「${goal}」 ${dayData.goalCompleted ? ' (達成済み 🎉)' : ''}\n・アドバイス: 目標達成に向けた振り返りを客観的に評価しましょう。\n\n`;
+                }
+
                 response += `1. 記述内容の客観的評価\n`;
                 if (journal.length > 30 || insights.length > 30) {
-                    response += `・良い点: 出来事に対して「何が起きたか」だけでなく、自分の認知や学び（「${insights.slice(0, 20)}...」など）まで掘り下げて言語化できている点が優れています。感情と事実が具体的に整理されています。\n`;
+                    response += `・良い点: 出来事に対して「何が起きたか」だけでなく、自分の認知や学び（「${insights.slice(0, 20)}...」など）まで掘り下げて言語化できている点が優れています。\n`;
                 } else if (journal.length > 0 || insights.length > 0) {
-                    response += `・現状の評価: 記述がまだ短く、概要にとどまっています。「なぜそう感じたのか」「どうしてその結果になったのか」という因果関係まで残すと、後から見返した際の再現性が高まります。\n`;
+                    response += `・現状の評価: 記述がまだ短く概要にとどまっています。因果関係まで残すと再現性が高まります。\n`;
                 } else {
-                    response += `・注意点: 感想・気づきの入力が未入力、または非常に短いです。AI分析の精度を上げるために、まずは今日の出来事や感情を数行書き出してみてください。\n`;
+                    response += `・注意点: 感想・気づきを入力して精度を高めてください。\n`;
                 }
                 response += `\n`;
 
                 response += `2. 課題・解決策の妥当性と懸念点\n`;
                 if (issuePairs.length > 0) {
                     issuePairs.forEach((p, idx) => {
-                        response += `[課題 ${idx + 1}] 「${p.issue}」\n`;
+                        response += `[課題 ${idx + 1}] 「${p.issue}」 ${p.completed ? '(克服済み)' : ''}\n`;
                         response += `[解決策] 「${p.solution}」\n`;
-                        
-                        if (p.solution.includes("頑張る") || p.solution.includes("意識する") || p.solution.length < 10) {
-                            response += `・【指摘・改善案】: 解決策が「意識」や「根性」に依存しています。意志の力は途切れやすいため、具体的に『いつ・どこで・何のツールを使ってやるか』という環境設定や数値目標（例: 25分タイマーをセットする等）に落とし込んでください。\n`;
-                        } else {
-                            response += `・【分析】: 具体的な行動ステップが提示されています。ただし、実践する時間帯やトリガー（例: 朝起きてすぐ等）が未定の場合は途絶えるリスクがあります。\n`;
-                        }
                     });
                     response += `\n`;
                 } else {
-                    response += `・【指摘】: 現在「課題と解決策」が登録されていません。問題を感じつつも打ち手が曖昧な状態の可能性があります。ボトルネックを1つに絞り、具体的な打ち手を登録することをお勧めします。\n\n`;
+                    response += `・【指摘】: 現在「課題と解決策」が登録されていません。ボトルネックの言語化をお勧めします。\n\n`;
                 }
 
                 response += `3. 今後に向けた具体的アクション\n`;
-                if (fullText.includes("集中") || fullText.includes("時間") || fullText.includes("疲")) {
-                    response += `・時間の切り売りではなく「エネルギー管理」にシフトしてください。疲れを感じてから休むのではなく、集中力が切れる前のタイマー管理（ポモドーロ等）を取り入れるべきです。\n\n`;
-                } else {
-                    response += `・立てた解決策を実行可能な「明日のタスク一覧」に落とし込み、ハードルを極限まで下げて着手してください。\n\n`;
-                }
+                response += `・立てた解決策を実行可能な「タスク一覧」に落とし込み、着実に克服へ繋げましょう。\n\n`;
 
                 response += `4. 思考の指針\n`;
                 response += `『計画の価値は、その実行と客観的な検証の中にある』\n`;
-                response += `感情に流されず、現状の課題を冷静に分析できていることは大きな強みです。指摘した改善点を反映させ、着実に行動へ繋げていきましょう。`;
 
                 dayData.aiAnalysis = response;
                 saveData();
@@ -741,7 +1201,7 @@
 
             taskInput.value = '';
             saveData();
-            renderTasks();
+            renderAll();
             lucide.createIcons();
 
             if (targetDateStr === currentDateStr) {
@@ -755,14 +1215,14 @@
             const dayData = getOrCreateDayData(currentDateStr);
             let text = `🌙 【${currentDateStr} の振り返り】\n\n`;
             
+            if (dayData.goal) text += `🎯 今日の目標:\n${dayData.goalCompleted ? '✓ ' : ''}${dayData.goal}\n\n`;
             if (dayData.journal) text += `💬 今日の感想:\n${dayData.journal}\n\n`;
             if (dayData.insights) text += `💡 気づいたこと:\n${dayData.insights}\n\n`;
             
             if (dayData.issuePairs && dayData.issuePairs.length > 0) {
                 text += `🎯 課題と解決策:\n`;
                 dayData.issuePairs.forEach(p => {
-                    if (p.issue) text += `・課題: ${p.issue}\n`;
-                    if (p.solution) text += `  解決策: ${p.solution}\n`;
+                    text += `${p.completed ? '✓' : '・'}課題: ${p.issue}\n  解決策: ${p.solution}\n`;
                 });
                 text += `\n`;
             }
@@ -779,7 +1239,6 @@
             return text;
         }
 
-        // スマホ（Android/iOS）でのLINE直接起動に対応した共有関数
         function shareTodayJournal() {
             const text = generateShareText();
             const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
@@ -811,8 +1270,16 @@
             const dayData = getOrCreateDayData(currentDateStr);
             dayData.issuePairs = dayData.issuePairs.filter(p => p.id !== pairId);
             saveData();
-            renderIssuePairs();
-            lucide.createIcons();
+            renderAll();
+        };
+
+        window.deleteIssuePairFromDate = function(dateStr, pairId) {
+            if (appData[dateStr] && appData[dateStr].issuePairs) {
+                appData[dateStr].issuePairs = appData[dateStr].issuePairs.filter(p => p.id !== pairId);
+                saveData();
+                renderAll();
+                showToast('課題と解決策を削除しました');
+            }
         };
 
         function changeDate(days) {
@@ -831,8 +1298,7 @@
                         appData[originalDate].tasks = appData[originalDate].tasks.filter(t => t.id !== taskId);
                         getOrCreateDayData(currentDateStr).tasks.push({ ...task, completed: true });
                         saveData();
-                        renderTasks();
-                        lucide.createIcons();
+                        renderAll();
                         showToast('持ち越しタスクを完了しました！ 🎉');
                     }
                 }
@@ -842,8 +1308,7 @@
                 if (task) {
                     task.completed = !task.completed;
                     saveData();
-                    renderTasks();
-                    lucide.createIcons();
+                    renderAll();
                     if (task.completed) {
                         showToast('タスクを完了しました！ 🎉');
                     }
@@ -855,8 +1320,7 @@
             if (appData[originalDate]) {
                 appData[originalDate].tasks = appData[originalDate].tasks.filter(t => t.id !== taskId);
                 saveData();
-                renderTasks();
-                lucide.createIcons();
+                renderAll();
                 showToast('タスクを削除しました');
             }
         };
@@ -875,8 +1339,7 @@
                 if (input.value.trim()) task.text = input.value.trim();
                 delete task.isEditing;
                 saveData();
-                renderTasks();
-                lucide.createIcons();
+                renderAll();
             }
         };
 
