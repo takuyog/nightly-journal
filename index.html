@@ -66,7 +66,7 @@
         }
     </style>
 
-    <!-- Firebase SDK (Modular) -->
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -171,7 +171,7 @@
                 <div class="flex items-center gap-1.5">
                     <button id="notification-btn" onclick="requestNotificationPermission()" class="flex items-center gap-1 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border border-amber-700/50 px-2 py-1 rounded-xl text-xs font-semibold transition" title="朝8時・昼12時・夜6時の通知を有効化">
                         <i data-lucide="bell" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>通知許可</span>
+                        <span id="notification-btn-label">通知許可</span>
                     </button>
 
                     <button id="login-btn" onclick="firebaseLogin()" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded-xl text-xs font-semibold transition">
@@ -589,10 +589,28 @@
             renderAll();
             setupEventListeners();
             registerServiceWorker();
+            checkNotificationStatus();
             startNotificationTimer();
         });
 
-        // ★ 朝8時・昼12時・夜18時の定時通知機能
+        // サービスワーカー（sw.js）の安全な登録
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('ServiceWorker registered'))
+                    .catch(err => console.log('ServiceWorker error:', err));
+            }
+        }
+
+        function checkNotificationStatus() {
+            const btn = document.getElementById('notification-btn');
+            const label = document.getElementById('notification-btn-label');
+            if (("Notification" in window) && Notification.permission === "granted") {
+                if (btn) btn.className = "flex items-center gap-1 bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 px-2 py-1 rounded-xl text-xs font-semibold transition";
+                if (label) label.textContent = "通知ON";
+            }
+        }
+
         window.requestNotificationPermission = function() {
             if (!("Notification" in window)) {
                 alert("このブラウザはWeb通知をサポートしていません");
@@ -601,11 +619,9 @@
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     showToast("通知がオンになりました（朝8時・昼12時・夜6時）");
-                    const btn = document.getElementById('notification-btn');
-                    if (btn) btn.innerHTML = `<i data-lucide="bell-check" class="w-3.5 h-3.5 text-emerald-400"></i><span>通知ON</span>`;
-                    lucide.createIcons();
+                    checkNotificationStatus();
                 } else {
-                    showToast("通知が拒否されました");
+                    showToast("通知許可が得られませんでした");
                 }
             });
         };
@@ -614,7 +630,7 @@
 
         function startNotificationTimer() {
             setInterval(() => {
-                if (Notification.permission !== "granted") return;
+                if (("Notification" in window) && Notification.permission !== "granted") return;
 
                 const now = new Date();
                 const hours = String(now.getHours()).padStart(2, '0');
@@ -637,26 +653,19 @@
                     lastNotifiedMinute = timeKey;
                     sendWebNotification("🌙 夜18時：振り返りノートの時間", "今日1日の振り返り・学んだことをノートに記録しましょう！");
                 }
-            }, 30000); // 30秒ごとに時間判定
+            }, 20000);
         }
 
         function sendWebNotification(title, body) {
-            new Notification(title, {
-                body: body,
-                icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='65%' font-size='60' text-anchor='middle'>🌙</text></svg>"
-            });
-        }
-
-        // Service Worker for PWA
-        function registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                const swCode = `
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('activate', e => self.clients.claim());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-                `;
-                const blob = new Blob([swCode], { type: 'text/javascript' });
-                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(title, {
+                        body: body,
+                        icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='65%' font-size='60' text-anchor='middle'>🌙</text></svg>"
+                    });
+                });
+            } else {
+                new Notification(title, { body: body });
             }
         }
 
