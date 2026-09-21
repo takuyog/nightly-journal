@@ -33,7 +33,6 @@
         * {
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        /* スクロールバーのカスタマイズ */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -50,10 +49,10 @@
         }
     </style>
 </head>
-<body class="bg-[#0B0F19] text-slate-200 h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col overflow-hidden pb-16 lg:pb-0">
+<body class="bg-[#0B0F19] text-slate-200 min-h-screen lg:h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden">
 
-    <!-- ヘッダーエリア (固定) -->
-    <header class="bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 shrink-0 z-30">
+    <!-- ヘッダーエリア -->
+    <header class="bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 shrink-0 z-30 sticky top-0">
         <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-2">
             <!-- 日付選択 & ナビゲーション -->
             <div class="flex items-center gap-1.5">
@@ -72,35 +71,46 @@
                 </button>
             </div>
 
-            <!-- ステータス & 保存管理 -->
+            <!-- バックアップ・保存機能 -->
             <div class="flex items-center gap-2">
-                <!-- バックアップ（エクスポート） -->
                 <button id="export-data-btn" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1" title="全データを保存">
                     <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
                     <span class="hidden md:inline">バックアップ</span>
                 </button>
-
-                <!-- 復元（インポート） -->
                 <label class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1 cursor-pointer" title="データの復元">
                     <i data-lucide="upload" class="w-4 h-4 text-amber-400"></i>
                     <span class="hidden md:inline">復元</span>
                     <input type="file" id="import-data-file" accept=".json" class="hidden">
                 </label>
-
-                <!-- 手動保存ボタン -->
                 <button id="manual-save-btn" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-medium shadow-lg shadow-blue-900/30 transition active:scale-95">
                     <i data-lucide="save" class="w-4 h-4"></i>
                     <span>保存</span>
                 </button>
             </div>
         </div>
+
+        <!-- スマホ専用：上部タブナビゲーション（画面幅1023px以下で表示） -->
+        <nav class="lg:hidden flex items-center justify-around border-t border-slate-800/80 pt-2 mt-2">
+            <button onclick="switchMobileTab('tasks')" id="nav-btn-tasks" class="mobile-nav-btn flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-slate-400 font-medium text-xs transition w-1/3">
+                <i data-lucide="check-square" class="w-4 h-4"></i>
+                <span>タスク</span>
+            </button>
+            <button onclick="switchMobileTab('journal')" id="nav-btn-journal" class="mobile-nav-btn active flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-blue-400 bg-blue-900/30 border border-blue-500/30 font-medium text-xs transition w-1/3">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                <span>振り返り</span>
+            </button>
+            <button onclick="switchMobileTab('insights')" id="nav-btn-insights" class="mobile-nav-btn flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-slate-400 font-medium text-xs transition w-1/3">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>気づき</span>
+            </button>
+        </nav>
     </header>
 
-    <!-- 3分割メインエリア (PC: 3カラム常時表示 / スマホ: タブ切り替え) -->
-    <div class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 md:p-6 lg:grid lg:grid-cols-12 gap-6 overflow-hidden h-[calc(100vh-60px)]">
+    <!-- 3分割メインエリア (PC: 3カラム常時表示 / スマホ: 1カラム縦一列スクロール) -->
+    <div class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 md:p-6 lg:grid lg:grid-cols-12 gap-6 lg:overflow-hidden lg:h-[calc(100vh-65px)]">
 
         <!-- 1. タスク管理エリア (PC: 3/12 / スマホ: タブ1) -->
-        <aside id="tab-tasks" class="mobile-tab-content lg:block lg:col-span-3 flex flex-col h-full overflow-hidden">
+        <aside id="tab-tasks" class="mobile-tab-content hidden lg:flex lg:col-span-3 flex-col h-full overflow-hidden">
             <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
                     <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -144,8 +154,8 @@
             </div>
         </aside>
 
-        <!-- 2. 振り返りノート (PC: 6/12 / スマホ: タブ2 - デフォルト表示) -->
-        <main id="tab-journal" class="mobile-tab-content active lg:block lg:col-span-6 space-y-5 overflow-y-auto h-full pr-1 lg:pr-2 pb-12">
+        <!-- 2. 振り返りノート (PC: 6/12 / スマホ: タブ2 - 縦一列縦スクロール) -->
+        <main id="tab-journal" class="mobile-tab-content flex flex-col lg:col-span-6 space-y-5 lg:overflow-y-auto lg:h-full pr-0 lg:pr-2 pb-12">
             <div class="border-b border-slate-800 pb-2 flex items-center justify-between sticky top-0 bg-[#0B0F19]/90 backdrop-blur-md pt-1 z-10">
                 <h2 class="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
                     <i data-lucide="book-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
@@ -164,8 +174,8 @@
                     <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
                     今日の感想
                 </label>
-                <textarea id="reflection-journal" rows="3" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                <textarea id="reflection-journal" rows="4" 
+                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     placeholder="今日あったこと、感じたことを書いてみよう"></textarea>
             </div>
 
@@ -175,8 +185,8 @@
                     <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
                     気づいたこと 💡
                 </label>
-                <textarea id="reflection-insights" rows="3" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                <textarea id="reflection-insights" rows="4" 
+                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     placeholder="今日気づいたこと・学んだことは？"></textarea>
             </div>
 
@@ -192,13 +202,13 @@
                     <div class="space-y-1">
                         <span class="text-[11px] text-purple-300 font-medium">現在の課題</span>
                         <input type="text" id="issue-input" 
-                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-purple-500"
+                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-purple-500"
                             placeholder="例：集中力が途切れやすい">
                     </div>
                     <div class="space-y-1">
                         <span class="text-[11px] text-emerald-300 font-medium">解決策</span>
                         <input type="text" id="solution-input" 
-                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
                             placeholder="例：25分作業して5分休むポモドーロテクニックを使う">
                     </div>
                     <button id="add-issue-pair-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
@@ -217,8 +227,8 @@
                     <i data-lucide="smile" class="w-4 h-4 text-emerald-400"></i>
                     よかったこと 😊
                 </label>
-                <textarea id="reflection-good" rows="3" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                <textarea id="reflection-good" rows="4" 
+                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                     placeholder="うまくいったこと、嬉しかったことは？"></textarea>
             </div>
 
@@ -231,10 +241,10 @@
                         </div>
                         <div>
                             <h3 class="text-sm sm:text-base font-bold text-slate-100">AIアドバイザーに相談</h3>
-                            <p class="text-[11px] text-slate-400">内容を分析し、困りごとへの解決案をお届けします</p>
+                            <p class="text-[11px] text-slate-400">客観的な分析、課題の改善案、実践的フィードバックをお届けします</p>
                         </div>
                     </div>
-                    <button id="ask-ai-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium px-4 py-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-900/40 shrink-0 active:scale-95">
+                    <button id="ask-ai-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl transition text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-900/40 shrink-0 active:scale-95">
                         <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
                         <span>AIに相談する ✨</span>
                     </button>
@@ -243,14 +253,14 @@
                 <!-- AIの出力テキストエリア -->
                 <div id="ai-response-container" class="hidden space-y-2 pt-1">
                     <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text">
-                        <!-- AIの回答 -->
+                        <!-- AIの具体的かつ客観的な回答 -->
                     </div>
                 </div>
             </div>
         </main>
 
         <!-- 3. 気づき一覧タイムライン (PC: 3/12 / スマホ: タブ3) -->
-        <aside id="tab-insights" class="mobile-tab-content lg:block lg:col-span-3 flex flex-col h-full overflow-hidden">
+        <aside id="tab-insights" class="mobile-tab-content hidden lg:flex lg:col-span-3 flex-col h-full overflow-hidden">
             <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
                     <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -268,24 +278,8 @@
 
     </div>
 
-    <!-- スマホ専用：下部固定タブバー (画面幅1023px以下で常時表示) -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0F19]/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center py-2 z-40">
-        <button onclick="switchMobileTab('tasks')" id="nav-btn-tasks" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-blue-400 transition w-1/3">
-            <i data-lucide="check-square" class="w-5 h-5"></i>
-            <span class="text-[10px] font-medium">タスク</span>
-        </button>
-        <button onclick="switchMobileTab('journal')" id="nav-btn-journal" class="mobile-nav-btn active flex flex-col items-center gap-1 text-blue-400 transition w-1/3">
-            <i data-lucide="book-open" class="w-5 h-5"></i>
-            <span class="text-[10px] font-medium">振り返り</span>
-        </button>
-        <button onclick="switchMobileTab('insights')" id="nav-btn-insights" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-amber-400 transition w-1/3">
-            <i data-lucide="sparkles" class="w-5 h-5"></i>
-            <span class="text-[10px] font-medium">気づき</span>
-        </button>
-    </nav>
-
     <!-- 通知トースト -->
-    <div id="toast" class="fixed bottom-16 lg:bottom-6 right-4 sm:right-6 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-xs sm:text-sm">
+    <div id="toast" class="fixed bottom-6 right-4 sm:right-6 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-xs sm:text-sm">
         <i data-lucide="check-circle" class="w-4 h-4"></i>
         <span id="toast-message" class="font-medium">保存しました！</span>
     </div>
@@ -392,15 +386,15 @@
             lucide.createIcons();
         }
 
-        // スマホ用タブ切り替え関数
+        // スマホ用上部タブ切り替え関数
         window.switchMobileTab = function(tabName) {
             document.querySelectorAll('.mobile-tab-content').forEach(el => {
-                el.classList.remove('active');
-                if (window.innerWidth < 1024) el.style.display = 'none';
+                el.classList.add('hidden');
+                el.classList.remove('flex');
             });
 
             document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
-                btn.classList.remove('text-blue-400');
+                btn.classList.remove('text-blue-400', 'bg-blue-900/30', 'border', 'border-blue-500/30');
                 btn.classList.add('text-slate-400');
             });
 
@@ -408,12 +402,12 @@
             const targetNav = document.getElementById(`nav-btn-${tabName}`);
 
             if (targetContent) {
-                targetContent.classList.add('active');
-                targetContent.style.display = 'flex';
+                targetContent.classList.remove('hidden');
+                targetContent.classList.add('flex');
             }
             if (targetNav) {
                 targetNav.classList.remove('text-slate-400');
-                targetNav.classList.add('text-blue-400');
+                targetNav.classList.add('text-blue-400', 'bg-blue-900/30', 'border', 'border-blue-500/30');
             }
         };
 
@@ -659,57 +653,70 @@
                 reader.readAsText(file);
             });
 
-            // 初期画面（スマホ）
+            // スマホ初期画面設定
             if (window.innerWidth < 1024) {
                 switchMobileTab('journal');
             }
         }
 
+        // 具体的かつ客観的なAIアドバイス生成ロジック（全肯定の排除）
         function generatePersonalizedAdvice() {
             const dayData = getOrCreateDayData(currentDateStr);
             aiResponseContainer.classList.remove('hidden');
-            aiResponseText.textContent = "AIアドバイザーが今日の内容と課題を分析し、最適な解決策とメッセージを作成中...";
+            aiResponseText.textContent = "AIアドバイザーが文章のロジック、課題設定の妥当性、改善点を分析中...";
 
             setTimeout(() => {
-                const journalText = (dayData.journal || '') + (dayData.insights || '');
-                const issuesText = (dayData.issuePairs || []).map(p => `${p.issue} ${p.solution}`).join(' ');
-                const fullText = (journalText + ' ' + issuesText).toLowerCase();
-
-                let detectedTopic = "思考と実行のバランス";
-                let customizedSolution = "";
-
-                if (fullText.includes("集中") || fullText.includes("眠") || fullText.includes("疲") || fullText.includes("続かない")) {
-                    detectedTopic = "集中力とコンディション管理";
-                    customizedSolution = `・【ポモドーロ＋超小分け戦略】\n  「集中が途切れる」「疲れやすい」と感じている場合、作業量を半分にするのではなく『時間単位（25分作業＋5分完全休憩）』で切るのが最も効果的です。集中が切れる前に休むのが継続のコツです。`;
-                } else if (fullText.includes("時間") || fullText.includes("遅") || fullText.includes("間に合") || fullText.includes("忙")) {
-                    detectedTopic = "時間活用と優先順位";
-                    customizedSolution = `・【朝一番の15分ブロック】\n  時間に追われるときは「一番重いタスク」を朝一番の15分間だけ手をつける習慣を作ってみてください。着手さえできれば、心理的ハードル（作業興奮）は一気に下がります。`;
-                } else if (fullText.includes("不安") || fullText.includes("悩") || fullText.includes("難") || fullText.includes("できない")) {
-                    detectedTopic = "メンタルコントロールと不安解消";
-                    customizedSolution = `・【課題の細分化（スモールステップ）】\n  難易度が高く不安を感じるテーマは、今すぐできる「5分で終わる最小アクション」まで解体してみましょう。悩む時間を行動のハードルを下げる時間に変えることができます。`;
-                } else {
-                    customizedSolution = `・【ルーティン化と着手の習慣】\n  今の取り組みをさらに高めるために、「毎日決まった時間・決まった場所で最初の1歩を踏み出す」仕組みを作りましょう。やる気に頼らず環境で動くのが最良の解決策です。`;
-                }
-
-                let response = `【AIアドバイス＆ソリューション】\n\n`;
+                const journal = dayData.journal || '';
+                const insights = dayData.insights || '';
+                const good = dayData.good || '';
+                const issuePairs = dayData.issuePairs || [];
                 
-                response += `1. 困りごと分析（テーマ：${detectedTopic}）\n`;
-                response += `本日の振り返りノートを分析しました。現状に満足せず「どう改善するか」を自ら模索している素晴らしい姿勢が見受けられます。\n\n`;
+                const fullText = (journal + ' ' + insights + ' ' + good).toLowerCase();
 
-                response += `2. あなたに合わせた具体的な解決案\n`;
-                response += `${customizedSolution}\n\n`;
+                let response = `【分析と客観的フィードバック】\n\n`;
 
-                if (dayData.issuePairs && dayData.issuePairs.length > 0) {
-                    response += `3. 設定された課題・解決策へのフィードバック\n`;
-                    dayData.issuePairs.forEach(p => {
-                        response += `・「${p.issue}」に対する「${p.solution}」のセットは非常に具体的です。これを確実に実行するために、明日のスケジュール（時間帯）をあらかじめ決めておきましょう。\n`;
+                // 1. 思考・振り返りの質の検証（どこが良いか具体的に）
+                response += `1. 記述内容の客観的評価\n`;
+                if (journal.length > 30 || insights.length > 30) {
+                    response += `・良い点: 出来事に対して「何が起きたか」だけでなく、自分の認知や学び（「${insights.slice(0, 20)}...」など）まで掘り下げて言語化できている点が優れています。感情と事実が具体的に整理されています。\n`;
+                } else if (journal.length > 0 || insights.length > 0) {
+                    response += `・現状の評価: 記述がまだ短く、概要にとどまっています。「なぜそう感じたのか」「どうしてその結果になったのか」という因果関係まで残すと、後から見返した際の再現性が高まります。\n`;
+                } else {
+                    response += `・注意点: 感想・気づきの入力が未入力、または非常に短いです。AI分析の精度を上げるために、まずは今日の出来事や感情を数行書き出してみてください。\n`;
+                }
+                response += `\n`;
+
+                // 2. 課題と解決策のロジック検証（甘さやズレの指摘）
+                response += `2. 課題・解決策の妥当性と懸念点\n`;
+                if (issuePairs.length > 0) {
+                    issuePairs.forEach((p, idx) => {
+                        response += `[課題 ${idx + 1}] 「${p.issue}」\n`;
+                        response += `[解決策] 「${p.solution}」\n`;
+                        
+                        // 解決策の解像度チェック
+                        if (p.solution.includes("頑張る") || p.solution.includes("意識する") || p.solution.length < 10) {
+                            response += `・【指摘・改善案】: 解決策が「意識」や「根性」に依存しています。意志の力は途切れやすいため、具体的に『いつ・どこで・何のツールを使ってやるか』という環境設定や数値目標（例: 25分タイマーをセットする等）に落とし込んでください。\n`;
+                        } else {
+                            response += `・【分析】: 具体的な行動ステップが提示されています。ただし、実践する時間帯やトリガー（例: 朝起きてすぐ等）が未定の場合は途絶えるリスクがあります。\n`;
+                        }
                     });
                     response += `\n`;
+                } else {
+                    response += `・【指摘】: 現在「課題と解決策」が登録されていません。問題を感じつつも打ち手が曖昧な状態の可能性があります。ボトルネックを1つに絞り、具体的な打ち手を登録することをお勧めします。\n\n`;
                 }
 
-                response += `4. 本質をついたアドバイス & モチベーション名言\n`;
-                response += `『成長とは、昨日の自分との比較の積み重ねである』\n`;
-                response += `結果を焦る必要はありません。今日こうして振り返りを行い、次の一手を考えている時点で、あなたはすでに前進しています。自分の軸を持って、明日も一歩ずつ着実に進んでいきましょう！✨`;
+                // 3. 具体的な改善アクション
+                response += `3. 今後に向けた具体的アクション\n`;
+                if (fullText.includes("集中") || fullText.includes("時間") || fullText.includes("疲")) {
+                    response += `・時間の切り売りではなく「エネルギー管理」にシフトしてください。疲れを感じてから休むのではなく、集中力が切れる前のタイマー管理（ポモドーロ等）を取り入れるべきです。\n\n`;
+                } else {
+                    response += `・立てた解決策を実行可能な「明日のタスク一覧」に落とし込み、ハードルを極限まで下げて着手してください。\n\n`;
+                }
+
+                // 4. モチベーションメッセージ
+                response += `4. 思考の指針\n`;
+                response += `『計画の価値は、その実行と客観的な検証の中にある』\n`;
+                response += `感情に流されず、現状の課題を冷静に分析できていることは大きな強みです。指摘した改善点を反映させ、着実に行動へ繋げていきましょう。`;
 
                 dayData.aiAnalysis = response;
                 saveData();
