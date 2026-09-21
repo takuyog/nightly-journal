@@ -50,50 +50,45 @@
         }
     </style>
 </head>
-<body class="bg-[#0B0F19] text-slate-200 min-h-screen lg:h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden">
+<body class="bg-[#0B0F19] text-slate-200 h-screen font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col overflow-hidden pb-16 lg:pb-0">
 
     <!-- ヘッダーエリア (固定) -->
-    <header class="bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 shrink-0 z-30 sticky top-0">
-        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
+    <header class="bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 shrink-0 z-30">
+        <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-2">
             <!-- 日付選択 & ナビゲーション -->
-            <div class="flex items-center gap-2">
-                <button id="prev-day-btn" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="前日へ">
-                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            <div class="flex items-center gap-1.5">
+                <button id="prev-day-btn" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="前日へ">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
-                <div class="relative flex items-center bg-slate-800/50 border border-slate-700/60 rounded-xl px-3 py-1.5">
-                    <i data-lucide="calendar" class="w-5 h-5 text-blue-400 mr-2"></i>
-                    <input type="date" id="date-picker" class="bg-transparent text-slate-100 font-semibold text-lg focus:outline-none cursor-pointer">
+                <div class="relative flex items-center bg-slate-800/50 border border-slate-700/60 rounded-xl px-2.5 py-1">
+                    <i data-lucide="calendar" class="w-4 h-4 text-blue-400 mr-1.5"></i>
+                    <input type="date" id="date-picker" class="bg-transparent text-slate-100 font-semibold text-sm sm:text-base focus:outline-none cursor-pointer">
                 </div>
-                <button id="next-day-btn" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="翌日へ">
-                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                <button id="next-day-btn" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-300 transition" title="翌日へ">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
-                <button id="today-btn" class="text-xs bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 border border-blue-700/50 px-3 py-2 rounded-lg font-medium transition">
+                <button id="today-btn" class="text-xs bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 border border-blue-700/50 px-2.5 py-1.5 rounded-lg font-medium transition">
                     今日
                 </button>
             </div>
 
-            <!-- ステータス & バックアップ・保存管理 -->
-            <div class="flex items-center gap-3">
-                <div id="save-status" class="hidden sm:flex items-center text-xs text-slate-400 gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/40 border border-slate-700/40">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="save-status-text">データ同期中</span>
-                </div>
-
+            <!-- ステータス & 保存管理 -->
+            <div class="flex items-center gap-2">
                 <!-- バックアップ（エクスポート） -->
-                <button id="export-data-btn" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1.5" title="全データを保存（バックアップ）">
+                <button id="export-data-btn" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1" title="全データを保存">
                     <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
                     <span class="hidden md:inline">バックアップ</span>
                 </button>
 
                 <!-- 復元（インポート） -->
-                <label class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1.5 cursor-pointer" title="データの復元（読み込み）">
+                <label class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition text-xs flex items-center gap-1 cursor-pointer" title="データの復元">
                     <i data-lucide="upload" class="w-4 h-4 text-amber-400"></i>
-                    <span class="hidden md:inline">データ復元</span>
+                    <span class="hidden md:inline">復元</span>
                     <input type="file" id="import-data-file" accept=".json" class="hidden">
                 </label>
 
                 <!-- 手動保存ボタン -->
-                <button id="manual-save-btn" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg shadow-blue-900/30 transition active:scale-95">
+                <button id="manual-save-btn" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-medium shadow-lg shadow-blue-900/30 transition active:scale-95">
                     <i data-lucide="save" class="w-4 h-4"></i>
                     <span>保存</span>
                 </button>
@@ -101,42 +96,41 @@
         </div>
     </header>
 
-    <!-- 3カラム レイアウト (PC: PC高さ固定・中央独立スクロール / スマホ: 全体縦スクロール) -->
-    <div class="flex-1 max-w-[1600px] w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:overflow-hidden lg:h-[calc(100vh-65px)]">
+    <!-- 3分割メインエリア (PC: 3カラム常時表示 / スマホ: タブ切り替え) -->
+    <div class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 md:p-6 lg:grid lg:grid-cols-12 gap-6 overflow-hidden h-[calc(100vh-60px)]">
 
-        <!-- 左カラム：タスク管理エリア (PC: 3/12固定 / スマホ: 順序2) -->
-        <aside class="lg:col-span-3 flex flex-col order-2 lg:order-1 lg:h-full lg:overflow-hidden">
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col lg:h-full overflow-hidden">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 shrink-0">
-                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+        <!-- 1. タスク管理エリア (PC: 3/12 / スマホ: タブ1) -->
+        <aside id="tab-tasks" class="mobile-tab-content lg:block lg:col-span-3 flex flex-col h-full overflow-hidden">
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
                         <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
                         常時タスク一覧
                     </h2>
                 </div>
 
                 <!-- タスク追加入力 -->
-                <div class="mb-4 space-y-2 shrink-0">
+                <div class="mb-3 space-y-2 shrink-0">
                     <input type="text" id="task-input" 
                         class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl px-3 py-2 text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
                         placeholder="追加するタスクを入力">
                     
                     <div class="flex items-center gap-2">
                         <div class="relative flex-1">
-                            <select id="task-target-date-type" class="w-full bg-[#1A2336] border border-slate-700/70 text-slate-200 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
+                            <select id="task-target-date-type" class="w-full bg-[#1A2336] border border-slate-700/70 text-slate-200 text-xs rounded-xl px-2.5 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="today">表示中の日（今日）やる</option>
                                 <option value="tomorrow" selected>明日やる 🌙</option>
                                 <option value="custom">日付を指定...</option>
                             </select>
                         </div>
                         <input type="date" id="task-custom-date" class="hidden bg-[#1A2336] border border-slate-700/70 text-slate-200 text-xs rounded-xl px-2 py-1.5 focus:outline-none">
-                        <button id="add-task-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl transition text-sm shrink-0">
+                        <button id="add-task-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-2 rounded-xl transition text-xs sm:text-sm shrink-0">
                             追加
                         </button>
                     </div>
-                    <p class="text-[11px] text-slate-500">※ Enter無効 / 追加ボタンのみ</p>
                 </div>
 
-                <!-- 凡例 (色分けの説明) -->
+                <!-- 凡例 -->
                 <div class="flex items-center gap-2 text-[10px] text-slate-400 pb-2 border-b border-slate-800/60 mb-2 shrink-0 flex-wrap">
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span>今日</span>
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span>未来・明日</span>
@@ -144,142 +138,156 @@
                 </div>
 
                 <!-- スクロール可能なタスクエリア -->
-                <div class="max-h-[300px] lg:max-h-none lg:flex-1 overflow-y-auto space-y-4 pr-1">
-                    <div class="space-y-2">
-                        <div id="tasks-list" class="space-y-2.5"></div>
-                    </div>
+                <div class="flex-1 overflow-y-auto space-y-2.5 pr-1" id="tasks-list">
+                    <!-- タスク要素 -->
                 </div>
             </div>
         </aside>
 
-        <!-- 中央カラム：振り返りノート (PC: 6/12独立スクロール / スマホ: 順序1メイン) -->
-        <main class="lg:col-span-6 space-y-6 order-1 lg:order-2 lg:overflow-y-auto lg:h-full pr-0 lg:pr-2 pb-6 lg:pb-12">
-            <div class="border-b border-slate-800 pb-2 flex items-center justify-between sticky top-[61px] lg:top-0 bg-[#0B0F19]/90 backdrop-blur-md pt-1 z-10">
-                <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
-                    <i data-lucide="book-open" class="w-6 h-6 text-blue-400"></i>
+        <!-- 2. 振り返りノート (PC: 6/12 / スマホ: タブ2 - デフォルト表示) -->
+        <main id="tab-journal" class="mobile-tab-content active lg:block lg:col-span-6 space-y-5 overflow-y-auto h-full pr-1 lg:pr-2 pb-12">
+            <div class="border-b border-slate-800 pb-2 flex items-center justify-between sticky top-0 bg-[#0B0F19]/90 backdrop-blur-md pt-1 z-10">
+                <h2 class="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
                     今日の振り返りノート
                 </h2>
                 <!-- 共有ボタン -->
-                <button id="share-btn" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl text-xs font-medium transition">
-                    <i data-lucide="share-2" class="w-4 h-4"></i>
-                    <span>今日の内容を共有</span>
+                <button id="share-btn" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 px-2.5 py-1.5 rounded-xl text-xs font-medium transition">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    <span>共有</span>
                 </button>
             </div>
 
             <!-- 感想 -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <label class="block text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
-                    <i data-lucide="message-square" class="w-5 h-5 text-blue-400"></i>
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                    <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
                     今日の感想
                 </label>
-                <textarea id="reflection-journal" rows="4" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                <textarea id="reflection-journal" rows="3" 
+                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     placeholder="今日あったこと、感じたことを書いてみよう"></textarea>
             </div>
 
             <!-- 気づいたこと -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <label class="block text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
-                    <i data-lucide="lightbulb" class="w-5 h-5 text-amber-400"></i>
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
                     気づいたこと 💡
                 </label>
-                <textarea id="reflection-insights" rows="4" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                <textarea id="reflection-insights" rows="3" 
+                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     placeholder="今日気づいたこと・学んだことは？"></textarea>
             </div>
 
             <!-- 課題と解決策（セット追加機能） -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                <label class="block text-base font-semibold text-slate-200 flex items-center gap-2">
-                    <i data-lucide="wrench" class="w-5 h-5 text-purple-400"></i>
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+                <label class="block text-sm sm:text-base font-semibold text-slate-200 flex items-center gap-2">
+                    <i data-lucide="wrench" class="w-4 h-4 text-purple-400"></i>
                     課題と解決策 🎯
                 </label>
 
                 <!-- 課題セット追加フォーム -->
-                <div class="bg-[#1A2336] p-4 rounded-xl border border-slate-700/60 space-y-3">
+                <div class="bg-[#1A2336] p-3 sm:p-4 rounded-xl border border-slate-700/60 space-y-2.5">
                     <div class="space-y-1">
-                        <span class="text-xs text-purple-300 font-medium">現在の課題</span>
+                        <span class="text-[11px] text-purple-300 font-medium">現在の課題</span>
                         <input type="text" id="issue-input" 
-                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-purple-500"
+                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-purple-500"
                             placeholder="例：集中力が途切れやすい">
                     </div>
                     <div class="space-y-1">
-                        <span class="text-xs text-emerald-300 font-medium">解決策</span>
+                        <span class="text-[11px] text-emerald-300 font-medium">解決策</span>
                         <input type="text" id="solution-input" 
-                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                            class="w-full bg-[#0B0F19] border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
                             placeholder="例：25分作業して5分休むポモドーロテクニックを使う">
                     </div>
-                    <button id="add-issue-pair-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg text-sm transition flex items-center justify-center gap-1.5">
+                    <button id="add-issue-pair-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                        <span>課題と解決策のセットを追加</span>
+                        <span>課題と解決策を追加</span>
                     </button>
                 </div>
 
                 <!-- 登録済み課題＆解決策リスト -->
-                <div id="issue-pairs-list" class="space-y-3"></div>
+                <div id="issue-pairs-list" class="space-y-2.5"></div>
             </div>
 
             <!-- よかったこと -->
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <label class="block text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
-                    <i data-lucide="smile" class="w-5 h-5 text-emerald-400"></i>
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                <label class="block text-sm sm:text-base font-semibold text-slate-200 mb-2 flex items-center gap-2">
+                    <i data-lucide="smile" class="w-4 h-4 text-emerald-400"></i>
                     よかったこと 😊
                 </label>
-                <textarea id="reflection-good" rows="4" 
-                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3.5 text-slate-100 text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                <textarea id="reflection-good" rows="3" 
+                    class="w-full bg-[#1A2336] border border-slate-700/70 rounded-xl p-3 text-slate-100 text-sm sm:text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                     placeholder="うまくいったこと、嬉しかったことは？"></textarea>
             </div>
 
             <!-- AIに相談する アクションセクション -->
-            <div class="bg-gradient-to-br from-[#182238] to-[#121827] border border-blue-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="bg-gradient-to-br from-[#182238] to-[#121827] border border-blue-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
                         <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
                             <i data-lucide="bot" class="w-5 h-5 text-blue-400"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-slate-100">AIアドバイザーに相談</h3>
-                            <p class="text-xs text-slate-400">内容を分析し、困りごとへの解決案とモチベーション名言をお届けします</p>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-100">AIアドバイザーに相談</h3>
+                            <p class="text-[11px] text-slate-400">内容を分析し、困りごとへの解決案をお届けします</p>
                         </div>
                     </div>
-                    <button id="ask-ai-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-900/40 shrink-0 active:scale-95">
+                    <button id="ask-ai-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium px-4 py-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-blue-900/40 shrink-0 active:scale-95">
                         <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
                         <span>AIに相談する ✨</span>
                     </button>
                 </div>
 
                 <!-- AIの出力テキストエリア -->
-                <div id="ai-response-container" class="hidden space-y-3 pt-2">
-                    <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-5 text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text">
-                        <!-- AIの回答がここに描画されます -->
+                <div id="ai-response-container" class="hidden space-y-2 pt-1">
+                    <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text">
+                        <!-- AIの回答 -->
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- 右カラム：気づき一覧タイムライン (PC: 3/12固定 / スマホ: 順序3) -->
-        <aside class="lg:col-span-3 flex flex-col order-3 lg:h-full lg:overflow-hidden">
-            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col lg:h-full overflow-hidden">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 shrink-0">
-                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+        <!-- 3. 気づき一覧タイムライン (PC: 3/12 / スマホ: タブ3) -->
+        <aside id="tab-insights" class="mobile-tab-content lg:block lg:col-span-3 flex flex-col h-full overflow-hidden">
+            <div class="bg-[#151C2C] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
                         <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
                         学び・気づきタイムライン
                     </h2>
                 </div>
 
                 <!-- スクロール可能な「気づき」タイムライン -->
-                <div class="max-h-[300px] lg:max-h-none lg:flex-1 overflow-y-auto space-y-3 pr-1" id="insights-timeline">
-                    <!-- Javascriptで動的に列挙 -->
+                <div class="flex-1 overflow-y-auto space-y-3 pr-1" id="insights-timeline">
+                    <!-- タイムライン要素 -->
                 </div>
             </div>
         </aside>
 
     </div>
 
+    <!-- スマホ専用：下部固定タブバー (画面幅1023px以下で常時表示) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0F19]/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center py-2 z-40">
+        <button onclick="switchMobileTab('tasks')" id="nav-btn-tasks" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-blue-400 transition w-1/3">
+            <i data-lucide="check-square" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">タスク</span>
+        </button>
+        <button onclick="switchMobileTab('journal')" id="nav-btn-journal" class="mobile-nav-btn active flex flex-col items-center gap-1 text-blue-400 transition w-1/3">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">振り返り</span>
+        </button>
+        <button onclick="switchMobileTab('insights')" id="nav-btn-insights" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-amber-400 transition w-1/3">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">気づき</span>
+        </button>
+    </nav>
+
     <!-- 通知トースト -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
-        <i data-lucide="check-circle" class="w-5 h-5"></i>
-        <span id="toast-message" class="font-medium text-base">保存しました！</span>
+    <div id="toast" class="fixed bottom-16 lg:bottom-6 right-4 sm:right-6 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-xs sm:text-sm">
+        <i data-lucide="check-circle" class="w-4 h-4"></i>
+        <span id="toast-message" class="font-medium">保存しました！</span>
     </div>
 
     <!-- JavaScript -->
@@ -384,6 +392,31 @@
             lucide.createIcons();
         }
 
+        // スマホ用タブ切り替え関数
+        window.switchMobileTab = function(tabName) {
+            document.querySelectorAll('.mobile-tab-content').forEach(el => {
+                el.classList.remove('active');
+                if (window.innerWidth < 1024) el.style.display = 'none';
+            });
+
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-400');
+                btn.classList.add('text-slate-400');
+            });
+
+            const targetContent = document.getElementById(`tab-${tabName}`);
+            const targetNav = document.getElementById(`nav-btn-${tabName}`);
+
+            if (targetContent) {
+                targetContent.classList.add('active');
+                targetContent.style.display = 'flex';
+            }
+            if (targetNav) {
+                targetNav.classList.remove('text-slate-400');
+                targetNav.classList.add('text-blue-400');
+            }
+        };
+
         function renderIssuePairs() {
             const dayData = getOrCreateDayData(currentDateStr);
             issuePairsList.innerHTML = '';
@@ -395,7 +428,7 @@
 
             dayData.issuePairs.forEach((pair) => {
                 const card = document.createElement('div');
-                card.className = 'p-3 bg-[#1A2336] border border-slate-700/60 rounded-xl space-y-2 relative group';
+                card.className = 'p-3 bg-[#1A2336] border border-slate-700/60 rounded-xl space-y-1.5 relative group';
                 card.innerHTML = `
                     <button onclick="deleteIssuePair('${pair.id}')" class="absolute top-2 right-2 text-slate-500 hover:text-rose-400 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
                     <div class="text-xs text-purple-300 flex items-start gap-1.5 pr-6">
@@ -625,6 +658,11 @@
                 };
                 reader.readAsText(file);
             });
+
+            // 初期画面（スマホ）
+            if (window.innerWidth < 1024) {
+                switchMobileTab('journal');
+            }
         }
 
         function generatePersonalizedAdvice() {
