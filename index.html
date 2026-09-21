@@ -253,7 +253,7 @@
                 <!-- AIの出力テキストエリア -->
                 <div id="ai-response-container" class="hidden space-y-2 pt-1">
                     <div class="bg-[#151C2C]/90 border border-slate-700/60 rounded-xl p-4 text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans" id="ai-response-text">
-                        <!-- AIの具体的かつ客観的な回答 -->
+                        <!-- AIの回答 -->
                     </div>
                 </div>
             </div>
@@ -659,7 +659,7 @@
             }
         }
 
-        // 具体的かつ客観的なAIアドバイス生成ロジック（全肯定の排除）
+        // 具体的かつ客観的なAIアドバイス生成ロジック
         function generatePersonalizedAdvice() {
             const dayData = getOrCreateDayData(currentDateStr);
             aiResponseContainer.classList.remove('hidden');
@@ -675,7 +675,6 @@
 
                 let response = `【分析と客観的フィードバック】\n\n`;
 
-                // 1. 思考・振り返りの質の検証（どこが良いか具体的に）
                 response += `1. 記述内容の客観的評価\n`;
                 if (journal.length > 30 || insights.length > 30) {
                     response += `・良い点: 出来事に対して「何が起きたか」だけでなく、自分の認知や学び（「${insights.slice(0, 20)}...」など）まで掘り下げて言語化できている点が優れています。感情と事実が具体的に整理されています。\n`;
@@ -686,14 +685,12 @@
                 }
                 response += `\n`;
 
-                // 2. 課題と解決策のロジック検証（甘さやズレの指摘）
                 response += `2. 課題・解決策の妥当性と懸念点\n`;
                 if (issuePairs.length > 0) {
                     issuePairs.forEach((p, idx) => {
                         response += `[課題 ${idx + 1}] 「${p.issue}」\n`;
                         response += `[解決策] 「${p.solution}」\n`;
                         
-                        // 解決策の解像度チェック
                         if (p.solution.includes("頑張る") || p.solution.includes("意識する") || p.solution.length < 10) {
                             response += `・【指摘・改善案】: 解決策が「意識」や「根性」に依存しています。意志の力は途切れやすいため、具体的に『いつ・どこで・何のツールを使ってやるか』という環境設定や数値目標（例: 25分タイマーをセットする等）に落とし込んでください。\n`;
                         } else {
@@ -705,7 +702,6 @@
                     response += `・【指摘】: 現在「課題と解決策」が登録されていません。問題を感じつつも打ち手が曖昧な状態の可能性があります。ボトルネックを1つに絞り、具体的な打ち手を登録することをお勧めします。\n\n`;
                 }
 
-                // 3. 具体的な改善アクション
                 response += `3. 今後に向けた具体的アクション\n`;
                 if (fullText.includes("集中") || fullText.includes("時間") || fullText.includes("疲")) {
                     response += `・時間の切り売りではなく「エネルギー管理」にシフトしてください。疲れを感じてから休むのではなく、集中力が切れる前のタイマー管理（ポモドーロ等）を取り入れるべきです。\n\n`;
@@ -713,7 +709,6 @@
                     response += `・立てた解決策を実行可能な「明日のタスク一覧」に落とし込み、ハードルを極限まで下げて着手してください。\n\n`;
                 }
 
-                // 4. モチベーションメッセージ
                 response += `4. 思考の指針\n`;
                 response += `『計画の価値は、その実行と客観的な検証の中にある』\n`;
                 response += `感情に流されず、現状の課題を冷静に分析できていることは大きな強みです。指摘した改善点を反映させ、着実に行動へ繋げていきましょう。`;
@@ -784,15 +779,18 @@
             return text;
         }
 
+        // スマホ（Android/iOS）でのLINE直接起動に対応した共有関数
         function shareTodayJournal() {
             const text = generateShareText();
+            const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
 
-            if (navigator.share) {
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                window.open(lineUrl, '_blank');
+                showToast('LINEを起動します');
+            } else if (navigator.share) {
                 navigator.share({
                     title: `${currentDateStr} の振り返り`,
                     text: text
-                }).then(() => {
-                    showToast('共有しました');
                 }).catch((err) => {
                     if (err.name !== 'AbortError') copyToClipboard(text);
                 });
